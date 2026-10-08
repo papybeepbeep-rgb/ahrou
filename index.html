@@ -1,0 +1,2302 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Ahrou 1.3</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Ahrou">
+<meta name="theme-color" content="#4F5358">
+<!-- Icône Ahrou (roue + horloge) : fichiers à placer à côté de index.html sur GitHub -->
+<link rel="icon" type="image/svg+xml" href="ahrou-icon.svg">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<style>
+  :root{
+    --bg:#f4f5f7; --card:#ffffff; --text:#1a1d23; --muted:#6b7280;
+    --border:#e5e7eb; --accent:#2563eb; --accent-text:#ffffff;
+    --accent2:#39ff14; --accent2-text:#111111;
+    --danger:#dc2626; --success:#16a34a; --chip:#eef2ff; --shadow:0 1px 3px rgba(0,0,0,.08);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#14161a; --card:#1e2127; --text:#f2f3f5; --muted:#9aa1ac;
+      --border:#2c3038; --accent:#5b8def; --accent-text:#0b0d10;
+      --accent2:#39ff14; --accent2-text:#111111;
+      --danger:#f87171; --success:#4ade80; --chip:#232941; --shadow:0 1px 3px rgba(0,0,0,.4);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#14161a; --card:#1e2127; --text:#f2f3f5; --muted:#9aa1ac;
+    --border:#2c3038; --accent:#5b8def; --accent-text:#0b0d10;
+    --accent2:#39ff14; --accent2-text:#111111;
+    --danger:#f87171; --success:#4ade80; --chip:#232941; --shadow:0 1px 3px rgba(0,0,0,.4);
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:var(--bg); color:var(--text);
+    font-family:"Comic Sans MS","Comic Neue","Comic Sans",cursive,sans-serif;
+    padding-bottom:90px;
+  }
+  .wrap{max-width:520px;margin:0 auto;padding:12px 14px 24px;}
+  header{
+    position:sticky; top:0; z-index:10; background:var(--bg);
+    padding:10px 0 6px; display:flex; flex-direction:column; gap:8px;
+  }
+  .top-row{display:flex; align-items:center; justify-content:space-between;}
+  .title{font-size:1.15rem; font-weight:700;}
+  .subtitle{font-size:.78rem; color:var(--muted);}
+  .icon-btn{
+    background:var(--card); border:1px solid var(--border); border-radius:10px;
+    width:38px; height:38px; display:flex; align-items:center; justify-content:center;
+    font-size:1.1rem; color:var(--text); cursor:pointer;
+  }
+  .month-nav{display:flex; align-items:center; justify-content:space-between; gap:8px;
+    background:var(--card); border:1px solid var(--border); border-radius:12px; padding:8px 10px; box-shadow:var(--shadow);}
+  .month-nav .label{font-weight:600; flex:1; text-align:center; font-size:.95rem;}
+  .month-nav button{background:none;border:none;color:var(--accent);font-size:1.2rem;padding:4px 10px;cursor:pointer;}
+
+  .summary-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin:12px 0;}
+  .sum-card{background:var(--card); border:1px solid var(--border); border-radius:12px; padding:10px; box-shadow:var(--shadow);}
+  .sum-card .lab{font-size:.68rem; color:var(--muted); text-transform:uppercase; letter-spacing:.03em;}
+  .sum-card .val{font-size:1.05rem; font-weight:700; margin-top:2px;}
+
+  .day-card{
+    background:var(--card); border:1px solid var(--border); border-radius:14px;
+    margin-bottom:10px; overflow:hidden; box-shadow:var(--shadow);
+  }
+  .day-head{display:flex; align-items:center; justify-content:space-between; padding:12px 14px; cursor:pointer;}
+  .day-head .dname{font-weight:600; font-size:.92rem;}
+  .day-head .ddate{font-size:.75rem; color:var(--muted);}
+  .day-head .chips{display:flex; gap:6px; flex-wrap:wrap; justify-content:flex-end;}
+  .chip{background:var(--chip); color:var(--accent); font-size:.72rem; padding:3px 8px; border-radius:999px; font-weight:600;}
+  .chip.gray{background:var(--border); color:var(--muted);}
+  .weekend .dname{color:var(--muted);}
+  .day-body{padding:0 14px 14px; display:none; border-top:1px solid var(--border);}
+  .day-body.open{display:block;}
+  .field-row{display:flex; gap:10px; margin-top:10px;}
+  .field{flex:1; display:flex; flex-direction:column; gap:4px;}
+  .field label{font-size:.72rem; color:var(--muted);}
+  input[type=time], input[type=number], input[type=text]{
+    background:var(--bg); border:1px solid var(--border); border-radius:8px;
+    padding:8px; font-size:.9rem; color:var(--text); width:100%;
+  }
+  .hm-group{display:flex; align-items:center; gap:5px;}
+  .hm-group input{width:52px; flex:none; text-align:center; padding:8px 4px;}
+  .hm-group span{font-size:.78rem; color:var(--muted);}
+  .toggle-row{display:flex; align-items:center; justify-content:space-between; margin-top:10px;}
+  .toggle-row span{font-size:.85rem;}
+  .switch{position:relative; width:42px; height:24px;}
+  .switch input{opacity:0; width:0; height:0;}
+  .slider{position:absolute; inset:0; background:var(--border); border-radius:999px; cursor:pointer; transition:.2s;}
+  .slider:before{content:"";position:absolute;width:18px;height:18px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.2s;}
+  input:checked + .slider{background:var(--accent);}
+  input:checked + .slider:before{transform:translateX(18px);}
+  .computed-row{display:flex; justify-content:space-between; margin-top:12px; padding-top:10px; border-top:1px dashed var(--border); font-size:.82rem; color:var(--muted);}
+  .computed-row b{color:var(--text);}
+
+  .section{background:var(--card); border:1px solid var(--border); border-radius:14px; padding:14px; margin-top:16px; box-shadow:var(--shadow);}
+  .section h3{margin:0 0 10px; font-size:.95rem;}
+  .diff{font-size:1.3rem; font-weight:800; text-align:center; margin-top:6px;}
+  .diff.pos{color:var(--success);} .diff.neg{color:var(--danger);}
+
+  .btn{
+    background:var(--accent); color:var(--accent-text); border:none; border-radius:10px;
+    padding:11px 14px; font-weight:700; font-size:.9rem; width:100%; cursor:pointer; margin-top:10px;
+  }
+  .btn.secondary{background:var(--chip); color:var(--accent);}
+
+  .modal-bg{position:fixed; inset:0; background:rgba(0,0,0,.45); display:none; align-items:flex-end; z-index:50;}
+  .modal-bg.open{display:flex;}
+  .modal{background:var(--card); width:100%; max-width:520px; margin:0 auto; border-radius:18px 18px 0 0;
+    padding:18px; max-height:85vh; overflow-y:auto;}
+  .modal h2{margin-top:0; font-size:1.05rem;}
+  .modal .field{margin-top:10px;}
+
+  footer.tabbar{
+    position:fixed; bottom:0; left:0; right:0; background:var(--card); border-top:1px solid var(--border);
+    display:flex; padding:8px 10px calc(8px + env(safe-area-inset-bottom)); gap:8px; z-index:20;
+  }
+  footer.tabbar button{
+    flex:1; background:none; border:none; color:var(--muted); font-size:.72rem; padding:6px 2px; cursor:pointer;
+    display:flex; flex-direction:column; align-items:center; gap:2px;
+  }
+  footer.tabbar button.active{color:var(--accent); font-weight:700;}
+  footer.tabbar .ic{font-size:1.15rem;}
+  small.hint{display:block; color:var(--muted); font-size:.72rem; margin-top:8px; line-height:1.4;}
+
+  /* Fond de l'application et en-tête */
+  html, body{background:#4F5358;}
+  header{background:#4F5358;}
+  header .title{color:#F2F2F0;}
+  header .subtitle{color:#D5D7DA;}
+  /* Polices des champs et boutons alignées sur l'application */
+  input, button, select, textarea{font-family:inherit;}
+  /* Coupure de 11 h respectée : jour et date en vert fluo */
+  .day-card.repos-ok .dname, .day-card.repos-ok .ddate{color:#39ff14; font-weight:700;}
+  /* Carte jour ouverte dans sa propre fenêtre */
+  .day-close{display:none; background:var(--bg); border:1px solid var(--border); color:var(--text);
+    border-radius:10px; width:36px; height:36px; font-size:1rem; cursor:pointer; margin-inline-start:8px; flex:none;}
+  .day-card.popup{
+    position:fixed; left:0; right:0; top:5vh;
+    width:calc(100% - 32px); max-width:520px; margin:0 auto; z-index:60;
+    max-height:calc(95vh - 16px); overflow-y:auto; border-radius:18px;
+    box-shadow:0 0 0 100vmax rgba(0,0,0,.55), 0 10px 30px rgba(0,0,0,.35);
+  }
+  .day-card.popup .day-head{position:sticky; top:0; background:inherit; z-index:1; padding:16px 16px 12px;}
+  .day-card.popup .dname{font-size:1.15rem;}
+  .day-card.popup .ddate{font-size:.85rem;}
+  .day-card.popup .day-close{display:flex; align-items:center; justify-content:center;}
+  .day-card.popup .day-body{padding:4px 16px 18px;}
+  .day-placeholder{height:46px; margin-bottom:10px; border:1px dashed var(--border); border-radius:14px; opacity:.5;}
+  /* ===== Abonnement ===== */
+  .wrap.locked > :not(header):not(#paywall):not(#trialBanner){filter:blur(7px); pointer-events:none; user-select:none;}
+  .paywall{background:var(--card); border:2px solid #EBBD1F; border-radius:14px; padding:14px; margin-top:12px; box-shadow:var(--shadow); text-align:center;}
+  .paywall h3{margin:0 0 6px; font-size:1rem;}
+  .paywall p{margin:0 0 10px; font-size:.85rem; color:var(--muted); line-height:1.4;}
+  .sub-status{font-size:.85rem; padding:10px; border-radius:10px; background:var(--chip); margin:8px 0; line-height:1.4;}
+  .sub-id{font-size:1.2rem; font-weight:800; letter-spacing:.08em; text-align:center; padding:8px; border:1px dashed var(--border); border-radius:10px; margin:6px 0 2px; user-select:all;}
+  .price-row{display:flex; gap:10px; margin-top:10px;}
+  .price-card{flex:1; border:1px solid var(--border); border-radius:12px; padding:12px 8px; text-align:center; background:var(--bg);}
+  .price-card .pp{font-size:1.4rem; font-weight:800;}
+  .price-card .pl{font-size:.75rem; color:var(--muted);}
+  .pay-btn{display:block; margin-top:8px; background:#ffc439; color:#111; border-radius:999px; padding:9px 6px; font-weight:700; font-size:.82rem; text-decoration:none;}
+  #subCode{letter-spacing:.1em; text-align:center; font-size:1.05rem;}
+  .trial-banner{background:#EBBD1F; color:#111; border-radius:12px; padding:8px 12px; margin-top:10px; font-size:.85rem; font-weight:700; text-align:center; cursor:pointer;}
+  .weekend-row{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+  .weekend-row > .day-card, .weekend-row > .day-placeholder{min-width:0;}
+  .weekend-row > .day-card.sunday{grid-column:2;}
+  /* Samedi / dimanche : nom et date centrés, heures non affichées (mais enregistrées) */
+  .weekend-row .day-card:not(.popup) .day-head{justify-content:center; text-align:center;}
+  .weekend-row .day-head .chips{display:none;}
+  .day-card.we-worked .dname, .day-card.we-worked .ddate{color:#14532d;}
+  .day-card.over10 .dname, .day-card.over10 .ddate{color:#fff !important; font-weight:700;}
+  .day-card.day-locked{filter:blur(4px); pointer-events:none; user-select:none; opacity:.75;}
+  .wrap.readonly #daysList input, .wrap.readonly .section input{opacity:.7;}
+  .wrap.readonly .slider{cursor:not-allowed;}
+  #subMsg{font-size:.85rem; min-height:1.2em; margin-top:8px; text-align:center;}
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="top-row">
+      <div>
+        <div class="title">🚛 Mes Heures</div>
+        <div class="subtitle" id="driverName">Chauffeur</div>
+      </div>
+      <div style="display:flex; gap:8px;">
+        <button class="icon-btn" id="btnSettings" title="Réglages">⚙️</button>
+      </div>
+    </div>
+    <div class="month-nav">
+      <button id="prevMonth">‹</button>
+      <div class="label" id="monthLabel">Octobre 2026</div>
+      <button id="nextMonth">›</button>
+    </div>
+  </header>
+
+  <div class="trial-banner" id="trialBanner" style="display:none;"></div>
+
+  <div class="paywall" id="paywall" style="display:none;">
+    <h3 id="paywallTitle">🔒 Abonnement requis</h3>
+    <p id="paywallText"></p>
+    <button class="btn" id="btnPaywallOpen" style="background:#EBBD1F;color:#111;">💳 S'abonner / Entrer mon code</button>
+  </div>
+
+  <div class="summary-grid" id="summaryGrid"></div>
+
+  <div id="daysList"></div>
+
+  <div class="section">
+    <h3>📋 Comparaison fiche de salaire</h3>
+    <div class="field-row">
+      <div class="field">
+        <label>Heures totales (fiche de salaire)</label>
+        <div id="ficheHeuresWrap"></div>
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>Indemnité séjour reçue (€)</label>
+        <input type="number" step="0.01" id="indemSejour">
+      </div>
+      <div class="field">
+        <label>Indemnité repas reçue (€)</label>
+        <input type="number" step="0.01" id="indemRepas">
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>Ajustement manuel (h, +/-)</label>
+        <input type="number" step="0.01" id="ajustManuel" value="0">
+      </div>
+      <div class="field">
+        <label>Indemnité séjour (€)</label>
+        <input type="number" step="0.01" id="indemSejour2" readonly style="background:var(--chip);opacity:.85;">
+      </div>
+    </div>
+    <div id="compareResult"></div>
+    <button class="btn secondary" id="btnRecalc" style="background:#e53935;color:#fff;border-color:#e53935;">Recalculer la comparaison</button>
+  </div>
+
+  <button class="btn secondary" id="btnSync" style="background:var(--accent2);color:var(--accent2-text);border-color:var(--accent2);">🔄 Synchronisation ( Pc &lt;&lt;&gt;&gt; Tablette )</button>
+
+  <button class="btn" id="btnExport" style="background:var(--accent2);color:var(--accent2-text);border-color:var(--accent2);">📊 Visualisation</button>
+  <div id="exportStatus" style="margin-top:8px;"></div>
+</div>
+
+<div class="modal-bg" id="syncModal">
+  <div class="modal">
+    <h2>🔄 Synchroniser</h2>
+    <p style="color:var(--muted);font-size:.9rem;">Choisis un sens de synchronisation avec Google Drive.</p>
+    <button class="btn secondary" id="btnSyncDown" style="margin-top:8px;">⬇️ Récupérer depuis Drive</button>
+    <button class="btn secondary" id="btnSyncUp" style="margin-top:8px;">⬆️ Envoyer vers Drive</button>
+    <div id="syncStatus" style="margin-top:12px;"></div>
+    <button class="btn secondary" id="btnCloseSync" style="margin-top:8px;">Fermer</button>
+  </div>
+</div>
+</div>
+
+
+
+
+<div class="modal-bg" id="subModal">
+  <div class="modal">
+    <h2>💳 Abonnement</h2>
+    <div class="sub-status" id="subStatus"></div>
+    <div style="font-size:.78rem;color:var(--muted);">Ton numéro client (à indiquer dans le message du paiement PayPal) :</div>
+    <div class="sub-id" id="subClientId"></div>
+    <div class="price-row">
+      <div class="price-card">
+        <div class="pl">Mensuel</div>
+        <div class="pp">0,99 €</div>
+        <div class="pl">le mois en cours uniquement</div>
+        <a class="pay-btn" id="payMonth" target="_blank" rel="noopener">Payer avec PayPal</a>
+      </div>
+      <div class="price-card">
+        <div class="pl">Annuel</div>
+        <div class="pp">10 €</div>
+        <div class="pl">les 12 mois de l'année</div>
+        <a class="pay-btn" id="payYear" target="_blank" rel="noopener">Payer avec PayPal</a>
+      </div>
+    </div>
+    <small class="hint">Après ton paiement, tu reçois ton code personnel. L'abonnement mensuel couvre le mois en cours jusqu'à son dernier jour (ex : payé le 10 octobre → valable jusqu'au 31 octobre) ; un nouveau code est demandé début du mois suivant.</small>
+    <div class="field" style="margin-top:14px;">
+      <label>Code d'activation</label>
+      <input type="text" id="subCode" placeholder="ex : aB3#kP7!xQ" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" maxlength="14">
+    </div>
+    <button class="btn" id="btnSubValidate">✅ Valider le code</button>
+    <div id="subMsg"></div>
+    <button class="btn secondary" id="btnCloseSub" style="margin-top:8px;">Fermer</button>
+  </div>
+</div>
+
+<div class="modal-bg" id="menuModal">
+  <div class="modal">
+    <h2>⚙️ Menu</h2>
+    <button class="btn secondary" id="menuGoSettings" style="display:block;width:100%;margin-top:10px;text-align:start;">🛠️ Réglages</button>
+    <button class="btn secondary" id="menuGoAppearance" style="display:block;width:100%;margin-top:10px;text-align:start;">🎨 Apparence</button>
+    <button class="btn secondary" id="menuGoHelp" style="display:block;width:100%;margin-top:10px;text-align:start;">❓ Aide</button>
+    <button class="btn secondary" id="menuGoSub" style="display:block;width:100%;margin-top:10px;text-align:start;">💳 Abonnement</button>
+    <button class="btn" id="btnCloseMenu" style="margin-top:14px;">Fermer</button>
+  </div>
+</div>
+
+<div class="modal-bg" id="appearanceModal">
+  <div class="modal">
+    <h2>🎨 Apparence</h2>
+    <div class="field">
+      <label>Thème</label>
+      <select id="setTheme">
+        <option value="auto">Automatique (selon l'appareil)</option>
+        <option value="light">Clair</option>
+        <option value="dark">Sombre</option>
+      </select>
+    </div>
+    <div class="field">
+      <label id="labelLangEl">Langue</label>
+      <select id="setLang">
+        <option value="en">English</option>
+        <option value="fr">Français</option>
+        <option value="nl">Nederlands</option>
+        <option value="ro">Română</option>
+        <option value="ar">العربية</option>
+      </select>
+    </div>
+    <div class="field" style="margin-top:4px;">
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+        <input type="checkbox" id="setCustomColorsToggle" style="width:auto;">
+        <span id="labelCustomColorsEl">Personnaliser les couleurs</span>
+      </label>
+    </div>
+    <div id="customColorsPanel" style="display:none;">
+      <div class="field">
+        <label id="labelBgEl">Couleur de fond</label>
+        <input type="color" id="colBg" style="width:100%;height:40px;padding:2px;">
+      </div>
+      <div class="field">
+        <label id="labelCardEl">Couleur des cartes</label>
+        <input type="color" id="colCard" style="width:100%;height:40px;padding:2px;">
+      </div>
+      <div class="field">
+        <label id="labelTextEl">Couleur du texte</label>
+        <input type="color" id="colText" style="width:100%;height:40px;padding:2px;">
+      </div>
+      <div class="field">
+        <label id="labelAccentEl">Couleur des boutons principaux</label>
+        <input type="color" id="colAccent" style="width:100%;height:40px;padding:2px;">
+      </div>
+      <div class="field">
+        <label id="labelAccent2El">Couleur des boutons d'action</label>
+        <input type="color" id="colAccent2" style="width:100%;height:40px;padding:2px;">
+      </div>
+      <button class="btn secondary" id="btnResetColors" type="button" style="margin-top:4px;">Réinitialiser les couleurs</button>
+    </div>
+    <button class="btn" id="btnCloseAppearance" style="margin-top:14px;">Enregistrer et fermer</button>
+  </div>
+</div>
+
+<div class="modal-bg" id="helpModal">
+  <div class="modal">
+    <h2>❓ Aide</h2>
+    <div style="font-size:14px;line-height:1.5;max-height:60vh;overflow-y:auto;">
+      <p><strong>Début / Fin</strong> : heures de prise et fin de poste (ex : tape 0600 → 06:00).</p>
+      <p><strong>Conduite</strong> : temps de conduite du jour. La carte du jour devient rouge si la conduite est comprise entre 9h00 et 10h00.</p>
+      <p><strong>Prestation</strong> : durée totale de la prestation.</p>
+      <p><strong>Disponibilité</strong> : calculée automatiquement (Prestation − Conduite).</p>
+      <p><strong>Réel / Pause</strong> : minutes de pause réelle et pause prise en compte.</p>
+      <p><strong>Nuitée</strong> : à cocher en cas de découché.</p>
+      <p><strong>Congé</strong> : coché automatiquement les jours fériés belges, modifiable manuellement.</p>
+      <p><strong>📊 Visualisation</strong> : télécharge le récapitulatif du mois (CSV) et l'envoie automatiquement sur Google Drive au format Google Sheets.</p>
+      <p><strong>🔄 Synchronisation</strong> : permet d'envoyer ou de récupérer tes données entre le PC et la tablette via Google Drive.</p>
+    </div>
+    <button class="btn" id="btnCloseHelp" style="margin-top:14px;">Fermer</button>
+  </div>
+</div>
+
+<div class="modal-bg" id="settingsModal">
+  <div class="modal">
+    <h2>⚙️ Réglages</h2>
+    <div class="field">
+      <label>Nom du chauffeur</label>
+      <input type="text" id="setNom">
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>Coefficient horaire (€/h)</label>
+        <input type="number" step="0.001" id="setCoefHoraire">
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>Coefficient nuit (€/h)</label>
+        <input type="text" inputmode="decimal" id="setCoefNuitee">
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>Réel par défaut (min)</label>
+        <input type="number" id="setPause1">
+      </div>
+      <div class="field">
+        <label>Pause par défaut (min)</label>
+        <input type="number" id="setPause2">
+      </div>
+    </div>
+    <button class="btn" id="btnCloseSettings">Enregistrer et fermer</button>
+    <small class="hint">Ces valeurs par défaut sont appliquées à chaque nouveau jour ; tu peux toujours les modifier jour par jour (par ex. pause fractionnée 15 min + 30 min).</small>
+  </div>
+</div>
+
+<footer class="tabbar">
+  <button class="active" id="tabDays"><span class="ic">📅</span>Jours</button>
+  <button id="tabHistory"><span class="ic">🕘</span>Historique</button>
+</footer>
+
+<div class="modal-bg" id="historyModal">
+  <div class="modal">
+    <h2>🕘 Historique des mois</h2>
+    <div id="historyList"></div>
+    <button class="btn secondary" id="btnCloseHistory">Fermer</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  const STORAGE_KEY = "heures_routier_v1";
+
+  const I18N = {
+    fr: {
+      appName: "Mes Heures", driverDefault: "Chauffeur", settingsTitleBtn: "Réglages",
+      comparisonTitle: "📋 Comparaison fiche de salaire",
+      labelHeuresFiche: "Heures totales (fiche de salaire)",
+      labelIndemSejour: "Indemnité séjour (€)",
+      labelIndemRepas: "Indemnité repas (€)",
+      labelAjustManuel: "Nbr nuit",
+      labelIndemNuit: "Indemnité nuit (€)",
+      btnRecalc: "Recalculer la comparaison",
+      btnSync: "🔄 Synchronisation ( Pc <<>> Tablette )",
+      btnExport: "📊 Visualisation",
+      syncModalTitle: "🔄 Synchroniser",
+      syncModalDesc: "Choisis un sens de synchronisation avec Google Drive.",
+      btnSyncDown: "⬇️ Récupérer depuis Drive",
+      btnSyncUp: "⬆️ Envoyer vers Drive",
+      btnClose: "Fermer",
+      menuTitle: "⚙️ Menu",
+      menuGoSettings: "🛠️ Réglages",
+      menuGoAppearance: "🎨 Apparence",
+      menuGoHelp: "❓ Aide",
+      appearanceTitle: "🎨 Apparence",
+      labelTheme: "Thème",
+      themeAuto: "Automatique (selon l'appareil)",
+      themeLight: "Clair",
+      themeDark: "Sombre",
+      labelLang: "Langue",
+      labelCustomColors: "Personnaliser les couleurs",
+      labelBg: "Couleur de fond", labelCard: "Couleur des cartes", labelText: "Couleur du texte",
+      labelAccent: "Couleur des boutons principaux", labelAccent2: "Couleur des boutons d'action",
+      btnResetColors: "Réinitialiser les couleurs",
+      btnSaveClose: "Enregistrer et fermer",
+      helpTitle: "❓ Aide",
+      help1: "<strong>Début / Fin</strong> : heures de prise et fin de poste (ex : tape 0600 → 06:00).",
+      help2: "<strong>Conduite</strong> : temps de conduite du jour. La carte du jour devient rose entre 9h00 et 10h00, et rouge foncé avec ⛔ +10h au-delà de 10h00 (infraction).",
+      help3: "<strong>Prestation</strong> : durée totale de la prestation.",
+      help4: "<strong>Disponibilité</strong> : calculée automatiquement (Prestation − Conduite).",
+      help5: "<strong>Réel / Pause</strong> : minutes de pause réelle et pause prise en compte.",
+      help6: "<strong>Nuitée</strong> : à cocher en cas de découché.",
+      help7: "<strong>Congé</strong> : coché automatiquement les jours fériés belges, modifiable manuellement.",
+      help9: "<strong>📊 Visualisation</strong> : télécharge le récapitulatif du mois (CSV) et l'envoie automatiquement sur Google Drive au format Google Sheets.",
+      help10: "<strong>🔄 Synchronisation</strong> : permet d'envoyer ou de récupérer tes données entre le PC et la tablette via Google Drive.",
+      settingsTitle: "⚙️ Réglages",
+      labelNom: "Nom du chauffeur",
+      labelCoefHoraire: "Coefficient horaire (€/h)",
+      labelCoefNuitee: "Coefficient nuit (€/h)",
+      labelReelDefaut: "Pause réel", labelPauseDefaut: "Pause par défaut",
+      settingsHint: "Ces valeurs par défaut sont appliquées à chaque nouveau jour ; tu peux toujours les modifier jour par jour (par ex. pause fractionnée 15 min + 30 min).",
+      tabDays: "Jours", tabHistory: "Historique",
+      historyTitle: "🕘 Historique des mois",
+      historyEmpty: "Aucun mois enregistré pour le moment.",
+      labelDebut: "Début", labelFin: "Fin", labelConduite: "Conduite", labelPrestation: "Prestation",
+      labelReel: "Réel (min)", labelPause: "Pause (min)", labelNuitee: "Nuitée (découché)", labelConge: "Congé",
+      labelDispo: "Disponibilité",
+      sumConduite: "Conduite", sumDispo: "Dispo", sumTotal: "Total", sumPause: "Pause",
+      sumTotalP45: "Total P45", sumReel: "Réel", sumTotalReel: "Total Réel", sumNuitees: "Nuitées",
+      compareNetLabel: "Heures calculées (net):",
+      compareFicheLabel: "Fiche + indemnités converties",
+      compareAjust: "+ ajustement:",
+      exportClicReceived: "⏳ Clic reçu, préparation du fichier...",
+      exportGenerating: "Génération du fichier...",
+      exportDownloaded: "✅ Fichier téléchargé.",
+      exportDownloadFailed: "⚠️ Le téléchargement local a échoué ou a été refusé.",
+      exportDownloadUnavailable: "⚠️ Le téléchargement local n'est pas disponible dans cette vue.",
+      exportSendingDrive: "Envoi sur Google Drive...",
+      exportOpenSheets: "📊 Ouvrir sur Google Sheets",
+      exportCopyLink: "📋 Copier le lien",
+      exportCopyHint: "Si \"impossible d'ouvrir le fichier\" s'affiche, colle le lien copié directement dans ton navigateur (Chrome/Safari) plutôt que de taper sur le bouton.",
+      exportCopySuccess: "✅ Lien copié ! Colle-le dans ton navigateur.",
+      exportCopyFail: "⚠️ Copie impossible :",
+      exportSentDrive: "✅ Fichier envoyé sur Google Drive.",
+      errReauth: "⚠️ Ta connexion à Google Drive a expiré. Reconnecte-la dans les réglages de Claude.",
+      errDriveFailed: "⚠️ L'envoi sur Google Drive a échoué.",
+      fatalError: "❌ Erreur pendant l'export :",
+      syncSending: "Envoi vers Google Drive...",
+      syncSent: "✅ Données envoyées sur Google Drive.",
+      syncSearching: "Recherche sur Google Drive...",
+      syncNoData: "Aucune donnée trouvée sur Drive. Utilise \"Envoyer vers Drive\" d'abord.",
+      syncFoundConfirm: "Des données ont été trouvées sur Drive. Les récupérer va remplacer celles présentes sur cet appareil.",
+      syncConfirmYes: "✅ Oui, remplacer",
+      syncInvalidFile: "Fichier invalide sur Drive.",
+      syncRetrieved: "✅ Données récupérées depuis Google Drive.",
+      errNotConnected: "Google Drive n'est pas connecté à Claude.",
+      errNotGranted: "Autorisation refusée pour accéder à Google Drive.",
+      errGeneric: "Une erreur est survenue lors de la synchronisation.",
+      driveUnavailable: "Google Drive n'est pas disponible dans cette vue.",
+      jours: ["Dimanche","Lundi","Mardi","Mercredi","Jeudi","Vendredi","Samedi"],
+      mois: ["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"],
+      csvHeader: ["Jour","Date","Début","Fin","Conduite","Dispo","Nuitée","Congé","Réel (min)","Pause (min)","Total"],
+      csvOui: "Oui", csvNuitees: "nuitées", csvConges: "congés",
+      csvTotaux: "TOTAUX", csvTotalP45: "Total P45", csvTotalReel: "Total Réel",
+      csvCompareTitle: "Comparaison fiche de salaire",
+      csvHeuresFiche: "Heures fiche de salaire",
+      csvIndemSejour: "Indemnité séjour (€)", csvIndemRepas: "Indemnité repas (€)",
+      csvCoefHoraire: "Coefficient horaire (€/h)", csvAjustManuel: "Nbr nuit", csvIndemNuit: "Indemnité nuit (€)",
+      csvFicheConverties: "Heures fiche + indemnités converties",
+      csvHeuresCalc: "Heures calculées (net)", csvDifference: "Différence"
+    },
+    en: {
+      appName: "My Hours", driverDefault: "Driver", settingsTitleBtn: "Settings",
+      comparisonTitle: "📋 Payslip comparison",
+      labelHeuresFiche: "Total hours (payslip)",
+      labelIndemSejour: "Stay allowance (€)",
+      labelIndemRepas: "Meal allowance (€)",
+      labelAjustManuel: "Night count",
+      labelIndemNuit: "Night allowance (€)",
+      btnRecalc: "Recalculate comparison",
+      btnSync: "🔄 Sync ( PC <<>> Tablet )",
+      btnExport: "📊 Overview",
+      syncModalTitle: "🔄 Sync",
+      syncModalDesc: "Choose a sync direction with Google Drive.",
+      btnSyncDown: "⬇️ Retrieve from Drive",
+      btnSyncUp: "⬆️ Send to Drive",
+      btnClose: "Close",
+      menuTitle: "⚙️ Menu",
+      menuGoSettings: "🛠️ Settings",
+      menuGoAppearance: "🎨 Appearance",
+      menuGoHelp: "❓ Help",
+      appearanceTitle: "🎨 Appearance",
+      labelTheme: "Theme",
+      themeAuto: "Automatic (device setting)",
+      themeLight: "Light",
+      themeDark: "Dark",
+      labelLang: "Language",
+      labelCustomColors: "Customize colors",
+      labelBg: "Background color", labelCard: "Card color", labelText: "Text color",
+      labelAccent: "Main button color", labelAccent2: "Action button color",
+      btnResetColors: "Reset colors",
+      btnSaveClose: "Save and close",
+      helpTitle: "❓ Help",
+      help1: "<strong>Start / End</strong>: start and end of shift (e.g. type 0600 → 06:00).",
+      help2: "<strong>Driving</strong>: driving time for the day. The day card turns pink between 9:00 and 10:00, and dark red with ⛔ +10h above 10:00 (violation).",
+      help3: "<strong>Shift</strong>: total duration of the shift.",
+      help4: "<strong>Availability</strong>: calculated automatically (Shift − Driving).",
+      help5: "<strong>Actual / Break</strong>: actual break minutes and break taken into account.",
+      help6: "<strong>Overnight</strong>: check if you slept away from home.",
+      help7: "<strong>Day off</strong>: automatically checked on Belgian public holidays, editable manually.",
+      help9: "<strong>📊 Overview</strong>: downloads the month's summary (CSV) and automatically sends it to Google Drive as a Google Sheet.",
+      help10: "<strong>🔄 Sync</strong>: send or retrieve your data between PC and tablet via Google Drive.",
+      settingsTitle: "⚙️ Settings",
+      labelNom: "Driver name",
+      labelCoefHoraire: "Hourly rate (€/h)",
+      labelCoefNuitee: "Night rate (€/h)",
+      labelReelDefaut: "Actual break", labelPauseDefaut: "Default break",
+      settingsHint: "These default values are applied to every new day; you can always adjust them day by day (e.g. split break 15 min + 30 min).",
+      tabDays: "Days", tabHistory: "History",
+      historyTitle: "🕘 Month history",
+      historyEmpty: "No month saved yet.",
+      labelDebut: "Start", labelFin: "End", labelConduite: "Driving", labelPrestation: "Shift",
+      labelReel: "Actual (min)", labelPause: "Break (min)", labelNuitee: "Overnight", labelConge: "Day off",
+      labelDispo: "Availability",
+      sumConduite: "Driving", sumDispo: "Avail.", sumTotal: "Total", sumPause: "Break",
+      sumTotalP45: "Total P45", sumReel: "Actual", sumTotalReel: "Total Actual", sumNuitees: "Overnights",
+      compareNetLabel: "Calculated hours (net):",
+      compareFicheLabel: "Payslip + converted allowances",
+      compareAjust: "+ adjustment:",
+      exportClicReceived: "⏳ Click received, preparing file...",
+      exportGenerating: "Generating file...",
+      exportDownloaded: "✅ File downloaded.",
+      exportDownloadFailed: "⚠️ Local download failed or was declined.",
+      exportDownloadUnavailable: "⚠️ Local download isn't available in this view.",
+      exportSendingDrive: "Sending to Google Drive...",
+      exportOpenSheets: "📊 Open on Google Sheets",
+      exportCopyLink: "📋 Copy link",
+      exportCopyHint: "If \"can't open file\" appears, paste the copied link directly into your browser (Chrome/Safari) instead of tapping the button.",
+      exportCopySuccess: "✅ Link copied! Paste it into your browser.",
+      exportCopyFail: "⚠️ Could not copy:",
+      exportSentDrive: "✅ File sent to Google Drive.",
+      errReauth: "⚠️ Your Google Drive connection has expired. Reconnect it in Claude's settings.",
+      errDriveFailed: "⚠️ Sending to Google Drive failed.",
+      fatalError: "❌ Error during export:",
+      syncSending: "Sending to Google Drive...",
+      syncSent: "✅ Data sent to Google Drive.",
+      syncSearching: "Searching Google Drive...",
+      syncNoData: "No data found on Drive. Use \"Send to Drive\" first.",
+      syncFoundConfirm: "Data was found on Drive. Retrieving it will replace what's on this device.",
+      syncConfirmYes: "✅ Yes, replace",
+      syncInvalidFile: "Invalid file on Drive.",
+      syncRetrieved: "✅ Data retrieved from Google Drive.",
+      errNotConnected: "Google Drive isn't connected to Claude.",
+      errNotGranted: "Permission denied to access Google Drive.",
+      errGeneric: "An error occurred during sync.",
+      driveUnavailable: "Google Drive isn't available in this view.",
+      jours: ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"],
+      mois: ["January","February","March","April","May","June","July","August","September","October","November","December"],
+      csvHeader: ["Day","Date","Start","End","Driving","Avail.","Overnight","Day off","Actual (min)","Break (min)","Total"],
+      csvOui: "Yes", csvNuitees: "overnights", csvConges: "days off",
+      csvTotaux: "TOTALS", csvTotalP45: "Total P45", csvTotalReel: "Total Actual",
+      csvCompareTitle: "Payslip comparison",
+      csvHeuresFiche: "Payslip hours",
+      csvIndemSejour: "Stay allowance (€)", csvIndemRepas: "Meal allowance (€)",
+      csvCoefHoraire: "Hourly rate (€/h)", csvAjustManuel: "Night count", csvIndemNuit: "Night allowance (€)",
+      csvFicheConverties: "Payslip + converted allowances hours",
+      csvHeuresCalc: "Calculated hours (net)", csvDifference: "Difference"
+    },
+    nl: {
+      appName: "Mijn Uren", driverDefault: "Chauffeur", settingsTitleBtn: "Instellingen",
+      comparisonTitle: "📋 Vergelijking loonfiche",
+      labelHeuresFiche: "Totaal uren (loonfiche)",
+      labelIndemSejour: "Verblijfsvergoeding (€)",
+      labelIndemRepas: "Maaltijdvergoeding (€)",
+      labelAjustManuel: "Aantal nachten",
+      labelIndemNuit: "Nachtvergoeding (€)",
+      btnRecalc: "Vergelijking herberekenen",
+      btnSync: "🔄 Synchronisatie ( Pc <<>> Tablet )",
+      btnExport: "📊 Overzicht",
+      syncModalTitle: "🔄 Synchroniseren",
+      syncModalDesc: "Kies een synchronisatierichting met Google Drive.",
+      btnSyncDown: "⬇️ Ophalen van Drive",
+      btnSyncUp: "⬆️ Versturen naar Drive",
+      btnClose: "Sluiten",
+      menuTitle: "⚙️ Menu",
+      menuGoSettings: "🛠️ Instellingen",
+      menuGoAppearance: "🎨 Weergave",
+      menuGoHelp: "❓ Help",
+      appearanceTitle: "🎨 Weergave",
+      labelTheme: "Thema",
+      themeAuto: "Automatisch (volgens toestel)",
+      themeLight: "Licht",
+      themeDark: "Donker",
+      labelLang: "Taal",
+      labelCustomColors: "Kleuren aanpassen",
+      labelBg: "Achtergrondkleur", labelCard: "Kleur van kaarten", labelText: "Tekstkleur",
+      labelAccent: "Kleur hoofdknoppen", labelAccent2: "Kleur actieknoppen",
+      btnResetColors: "Kleuren resetten",
+      btnSaveClose: "Opslaan en sluiten",
+      helpTitle: "❓ Help",
+      help1: "<strong>Start / Einde</strong>: begin- en einduur van de dienst (bv. typ 0600 → 06:00).",
+      help2: "<strong>Rijden</strong>: rijtijd van de dag. De dagkaart wordt roze tussen 9u00 en 10u00, en donkerrood met ⛔ +10h boven 10u00 (overtreding).",
+      help3: "<strong>Prestatie</strong>: totale duur van de prestatie.",
+      help4: "<strong>Beschikbaarheid</strong>: automatisch berekend (Prestatie − Rijden).",
+      help5: "<strong>Reëel / Pauze</strong>: reële pauzeminuten en in rekening gebrachte pauze.",
+      help6: "<strong>Overnachting</strong>: aanvinken bij overnachting buitenshuis.",
+      help7: "<strong>Verlof</strong>: automatisch aangevinkt op Belgische feestdagen, handmatig aanpasbaar.",
+      help9: "<strong>📊 Overzicht</strong>: downloadt het maandoverzicht (CSV) en stuurt het automatisch naar Google Drive als Google Sheet.",
+      help10: "<strong>🔄 Synchronisatie</strong>: verstuur of haal je gegevens op tussen pc en tablet via Google Drive.",
+      settingsTitle: "⚙️ Instellingen",
+      labelNom: "Naam chauffeur",
+      labelCoefHoraire: "Uurloon (€/u)",
+      labelCoefNuitee: "Nachttarief (€/u)",
+      labelReelDefaut: "Reële pauze", labelPauseDefaut: "Standaard pauze",
+      settingsHint: "Deze standaardwaarden worden toegepast op elke nieuwe dag; je kunt ze altijd dag per dag aanpassen (bv. gesplitste pauze 15 min + 30 min).",
+      tabDays: "Dagen", tabHistory: "Geschiedenis",
+      historyTitle: "🕘 Maandoverzicht",
+      historyEmpty: "Nog geen maand opgeslagen.",
+      labelDebut: "Start", labelFin: "Einde", labelConduite: "Rijden", labelPrestation: "Prestatie",
+      labelReel: "Reëel (min)", labelPause: "Pauze (min)", labelNuitee: "Overnachting", labelConge: "Verlof",
+      labelDispo: "Beschikbaarheid",
+      sumConduite: "Rijden", sumDispo: "Beschikb.", sumTotal: "Totaal", sumPause: "Pauze",
+      sumTotalP45: "Totaal P45", sumReel: "Reëel", sumTotalReel: "Totaal Reëel", sumNuitees: "Overnacht.",
+      compareNetLabel: "Berekende uren (netto):",
+      compareFicheLabel: "Loonfiche + omgezette vergoedingen",
+      compareAjust: "+ aanpassing:",
+      exportClicReceived: "⏳ Klik ontvangen, bestand wordt voorbereid...",
+      exportGenerating: "Bestand wordt gegenereerd...",
+      exportDownloaded: "✅ Bestand gedownload.",
+      exportDownloadFailed: "⚠️ Lokale download is mislukt of geweigerd.",
+      exportDownloadUnavailable: "⚠️ Lokale download is niet beschikbaar in deze weergave.",
+      exportSendingDrive: "Versturen naar Google Drive...",
+      exportOpenSheets: "📊 Openen in Google Sheets",
+      exportCopyLink: "📋 Link kopiëren",
+      exportCopyHint: "Als \"bestand kan niet worden geopend\" verschijnt, plak de gekopieerde link rechtstreeks in je browser (Chrome/Safari) in plaats van op de knop te tikken.",
+      exportCopySuccess: "✅ Link gekopieerd! Plak hem in je browser.",
+      exportCopyFail: "⚠️ Kopiëren mislukt:",
+      exportSentDrive: "✅ Bestand verstuurd naar Google Drive.",
+      errReauth: "⚠️ Je Google Drive-verbinding is verlopen. Maak opnieuw verbinding in de instellingen van Claude.",
+      errDriveFailed: "⚠️ Versturen naar Google Drive is mislukt.",
+      fatalError: "❌ Fout tijdens export:",
+      syncSending: "Versturen naar Google Drive...",
+      syncSent: "✅ Gegevens verstuurd naar Google Drive.",
+      syncSearching: "Zoeken op Google Drive...",
+      syncNoData: "Geen gegevens gevonden op Drive. Gebruik eerst \"Versturen naar Drive\".",
+      syncFoundConfirm: "Er zijn gegevens gevonden op Drive. Deze ophalen vervangt de gegevens op dit toestel.",
+      syncConfirmYes: "✅ Ja, vervangen",
+      syncInvalidFile: "Ongeldig bestand op Drive.",
+      syncRetrieved: "✅ Gegevens opgehaald van Google Drive.",
+      errNotConnected: "Google Drive is niet verbonden met Claude.",
+      errNotGranted: "Toegang tot Google Drive geweigerd.",
+      errGeneric: "Er is een fout opgetreden tijdens de synchronisatie.",
+      driveUnavailable: "Google Drive is niet beschikbaar in deze weergave.",
+      jours: ["Zondag","Maandag","Dinsdag","Woensdag","Donderdag","Vrijdag","Zaterdag"],
+      mois: ["Januari","Februari","Maart","April","Mei","Juni","Juli","Augustus","September","Oktober","November","December"],
+      csvHeader: ["Dag","Datum","Start","Einde","Rijden","Beschikb.","Overnachting","Verlof","Reëel (min)","Pauze (min)","Totaal"],
+      csvOui: "Ja", csvNuitees: "overnachtingen", csvConges: "verlofdagen",
+      csvTotaux: "TOTALEN", csvTotalP45: "Totaal P45", csvTotalReel: "Totaal Reëel",
+      csvCompareTitle: "Vergelijking loonfiche",
+      csvHeuresFiche: "Uren loonfiche",
+      csvIndemSejour: "Verblijfsvergoeding (€)", csvIndemRepas: "Maaltijdvergoeding (€)",
+      csvCoefHoraire: "Uurloon (€/u)", csvAjustManuel: "Aantal nachten", csvIndemNuit: "Nachtvergoeding (€)",
+      csvFicheConverties: "Loonfiche + omgezette vergoedingen uren",
+      csvHeuresCalc: "Berekende uren (netto)", csvDifference: "Verschil"
+    },
+    ro: {
+      appName: "Orele Mele", driverDefault: "Șofer", settingsTitleBtn: "Setări",
+      comparisonTitle: "📋 Comparație fluturaș de salariu",
+      labelHeuresFiche: "Total ore (fluturaș de salariu)",
+      labelIndemSejour: "Indemnizație de ședere (€)",
+      labelIndemRepas: "Indemnizație de masă (€)",
+      labelAjustManuel: "Nr. nopți",
+      labelIndemNuit: "Indemnizație de noapte (€)",
+      btnRecalc: "Recalculează comparația",
+      btnSync: "🔄 Sincronizare ( Pc <<>> Tabletă )",
+      btnExport: "📊 Vizualizare",
+      syncModalTitle: "🔄 Sincronizează",
+      syncModalDesc: "Alege un sens de sincronizare cu Google Drive.",
+      btnSyncDown: "⬇️ Preia de pe Drive",
+      btnSyncUp: "⬆️ Trimite pe Drive",
+      btnClose: "Închide",
+      menuTitle: "⚙️ Meniu",
+      menuGoSettings: "🛠️ Setări",
+      menuGoAppearance: "🎨 Aspect",
+      menuGoHelp: "❓ Ajutor",
+      appearanceTitle: "🎨 Aspect",
+      labelTheme: "Temă",
+      themeAuto: "Automat (după dispozitiv)",
+      themeLight: "Deschis",
+      themeDark: "Întunecat",
+      labelLang: "Limbă",
+      labelCustomColors: "Personalizează culorile",
+      labelBg: "Culoare fundal", labelCard: "Culoare carduri", labelText: "Culoare text",
+      labelAccent: "Culoare butoane principale", labelAccent2: "Culoare butoane de acțiune",
+      btnResetColors: "Resetează culorile",
+      btnSaveClose: "Salvează și închide",
+      helpTitle: "❓ Ajutor",
+      help1: "<strong>Start / Sfârșit</strong>: ora de începere și de sfârșit a turei (ex: tastează 0600 → 06:00).",
+      help2: "<strong>Condus</strong>: timpul de condus al zilei. Cardul zilei devine roz între 9:00 și 10:00 și roșu închis cu ⛔ +10h peste 10:00 (încălcare).",
+      help3: "<strong>Prestație</strong>: durata totală a prestației.",
+      help4: "<strong>Disponibilitate</strong>: calculată automat (Prestație − Condus).",
+      help5: "<strong>Real / Pauză</strong>: minute de pauză reală și pauză luată în calcul.",
+      help6: "<strong>Înnoptare</strong>: de bifat în caz de înnoptare în afara casei.",
+      help7: "<strong>Concediu</strong>: bifat automat în zilele de sărbătoare legală belgiană, modificabil manual.",
+      help9: "<strong>📊 Vizualizare</strong>: descarcă recapitulativul lunii (CSV) și îl trimite automat pe Google Drive ca Google Sheet.",
+      help10: "<strong>🔄 Sincronizare</strong>: permite trimiterea sau preluarea datelor tale între PC și tabletă prin Google Drive.",
+      settingsTitle: "⚙️ Setări",
+      labelNom: "Numele șoferului",
+      labelCoefHoraire: "Coeficient orar (€/h)",
+      labelCoefNuitee: "Coeficient de noapte (€/h)",
+      labelReelDefaut: "Pauză reală", labelPauseDefaut: "Pauză implicită",
+      settingsHint: "Aceste valori implicite sunt aplicate fiecărei zile noi; le poți modifica oricând zi de zi (ex: pauză fracționată 15 min + 30 min).",
+      tabDays: "Zile", tabHistory: "Istoric",
+      historyTitle: "🕘 Istoric luni",
+      historyEmpty: "Nicio lună salvată momentan.",
+      labelDebut: "Start", labelFin: "Sfârșit", labelConduite: "Condus", labelPrestation: "Prestație",
+      labelReel: "Real (min)", labelPause: "Pauză (min)", labelNuitee: "Înnoptare", labelConge: "Concediu",
+      labelDispo: "Disponibilitate",
+      sumConduite: "Condus", sumDispo: "Disponib.", sumTotal: "Total", sumPause: "Pauză",
+      sumTotalP45: "Total P45", sumReel: "Real", sumTotalReel: "Total Real", sumNuitees: "Înnoptări",
+      compareNetLabel: "Ore calculate (net):",
+      compareFicheLabel: "Fluturaș + indemnizații convertite",
+      compareAjust: "+ ajustare:",
+      exportClicReceived: "⏳ Click primit, se pregătește fișierul...",
+      exportGenerating: "Se generează fișierul...",
+      exportDownloaded: "✅ Fișier descărcat.",
+      exportDownloadFailed: "⚠️ Descărcarea locală a eșuat sau a fost refuzată.",
+      exportDownloadUnavailable: "⚠️ Descărcarea locală nu este disponibilă în această vizualizare.",
+      exportSendingDrive: "Se trimite pe Google Drive...",
+      exportOpenSheets: "📊 Deschide pe Google Sheets",
+      exportCopyLink: "📋 Copiază linkul",
+      exportCopyHint: "Dacă apare \"imposibil de deschis fișierul\", lipește linkul copiat direct în browser (Chrome/Safari) în loc să apeși pe buton.",
+      exportCopySuccess: "✅ Link copiat! Lipește-l în browser.",
+      exportCopyFail: "⚠️ Copiere imposibilă:",
+      exportSentDrive: "✅ Fișier trimis pe Google Drive.",
+      errReauth: "⚠️ Conexiunea ta la Google Drive a expirat. Reconectează-o din setările Claude.",
+      errDriveFailed: "⚠️ Trimiterea pe Google Drive a eșuat.",
+      fatalError: "❌ Eroare în timpul exportului:",
+      syncSending: "Se trimite pe Google Drive...",
+      syncSent: "✅ Date trimise pe Google Drive.",
+      syncSearching: "Se caută pe Google Drive...",
+      syncNoData: "Nu s-au găsit date pe Drive. Folosește mai întâi \"Trimite pe Drive\".",
+      syncFoundConfirm: "S-au găsit date pe Drive. Preluarea lor va înlocui datele de pe acest dispozitiv.",
+      syncConfirmYes: "✅ Da, înlocuiește",
+      syncInvalidFile: "Fișier invalid pe Drive.",
+      syncRetrieved: "✅ Date preluate de pe Google Drive.",
+      errNotConnected: "Google Drive nu este conectat la Claude.",
+      errNotGranted: "Permisiune refuzată pentru accesarea Google Drive.",
+      errGeneric: "A apărut o eroare în timpul sincronizării.",
+      driveUnavailable: "Google Drive nu este disponibil în această vizualizare.",
+      jours: ["Duminică","Luni","Marți","Miercuri","Joi","Vineri","Sâmbătă"],
+      mois: ["Ianuarie","Februarie","Martie","Aprilie","Mai","Iunie","Iulie","August","Septembrie","Octombrie","Noiembrie","Decembrie"],
+      csvHeader: ["Zi","Data","Start","Sfârșit","Condus","Disponib.","Înnoptare","Concediu","Real (min)","Pauză (min)","Total"],
+      csvOui: "Da", csvNuitees: "înnoptări", csvConges: "concedii",
+      csvTotaux: "TOTALURI", csvTotalP45: "Total P45", csvTotalReel: "Total Real",
+      csvCompareTitle: "Comparație fluturaș de salariu",
+      csvHeuresFiche: "Ore fluturaș de salariu",
+      csvIndemSejour: "Indemnizație de ședere (€)", csvIndemRepas: "Indemnizație de masă (€)",
+      csvCoefHoraire: "Coeficient orar (€/h)", csvAjustManuel: "Nr. nopți", csvIndemNuit: "Indemnizație de noapte (€)",
+      csvFicheConverties: "Ore fluturaș + indemnizații convertite",
+      csvHeuresCalc: "Ore calculate (net)", csvDifference: "Diferență"
+    },
+    ar: {
+      appName: "ساعاتي", driverDefault: "سائق", settingsTitleBtn: "الإعدادات",
+      comparisonTitle: "📋 مقارنة كشف الراتب",
+      labelHeuresFiche: "إجمالي الساعات (كشف الراتب)",
+      labelIndemSejour: "بدل الإقامة (€)",
+      labelIndemRepas: "بدل الوجبات (€)",
+      labelAjustManuel: "عدد الليالي",
+      labelIndemNuit: "بدل الليلة (€)",
+      btnRecalc: "إعادة حساب المقارنة",
+      btnSync: "🔄 مزامنة ( الحاسوب <<>> اللوحي )",
+      btnExport: "📊 عرض",
+      syncModalTitle: "🔄 مزامنة",
+      syncModalDesc: "اختر اتجاه المزامنة مع Google Drive.",
+      btnSyncDown: "⬇️ استرجاع من Drive",
+      btnSyncUp: "⬆️ إرسال إلى Drive",
+      btnClose: "إغلاق",
+      menuTitle: "⚙️ القائمة",
+      menuGoSettings: "🛠️ الإعدادات",
+      menuGoAppearance: "🎨 المظهر",
+      menuGoHelp: "❓ المساعدة",
+      appearanceTitle: "🎨 المظهر",
+      labelTheme: "السمة",
+      themeAuto: "تلقائي (حسب الجهاز)",
+      themeLight: "فاتح",
+      themeDark: "داكن",
+      labelLang: "اللغة",
+      labelCustomColors: "تخصيص الألوان",
+      labelBg: "لون الخلفية", labelCard: "لون البطاقات", labelText: "لون النص",
+      labelAccent: "لون الأزرار الرئيسية", labelAccent2: "لون أزرار الإجراءات",
+      btnResetColors: "إعادة تعيين الألوان",
+      btnSaveClose: "حفظ وإغلاق",
+      helpTitle: "❓ المساعدة",
+      help1: "<strong>بداية / نهاية</strong>: ساعة بداية ونهاية الدوام (مثال: اكتب 0600 ← 06:00).",
+      help2: "<strong>القيادة</strong>: مدة القيادة خلال اليوم. تصبح بطاقة اليوم حمراء إذا كانت مدة القيادة بين 9:00 و10:00.",
+      help3: "<strong>الخدمة</strong>: المدة الإجمالية للخدمة.",
+      help4: "<strong>التوفر</strong>: يُحسب تلقائياً (الخدمة − القيادة).",
+      help5: "<strong>الفعلي / الاستراحة</strong>: دقائق الاستراحة الفعلية والاستراحة المحتسبة.",
+      help6: "<strong>المبيت خارج المنزل</strong>: يُفعّل في حال المبيت خارج المنزل.",
+      help7: "<strong>الإجازة</strong>: تُفعّل تلقائياً في أيام العطل الرسمية البلجيكية، ويمكن تعديلها يدوياً.",
+      help9: "<strong>📊 عرض</strong>: يقوم بتنزيل ملخص الشهر (CSV) وإرساله تلقائياً إلى Google Drive بصيغة Google Sheets.",
+      help10: "<strong>🔄 مزامنة</strong>: تتيح إرسال أو استرجاع بياناتك بين الحاسوب واللوحي عبر Google Drive.",
+      settingsTitle: "⚙️ الإعدادات",
+      labelNom: "اسم السائق",
+      labelCoefHoraire: "معامل الأجر بالساعة (€/س)",
+      labelCoefNuitee: "معامل المبيت (€/س)",
+      labelReelDefaut: "الاستراحة الفعلية", labelPauseDefaut: "الاستراحة الافتراضية",
+      settingsHint: "تُطبَّق هذه القيم الافتراضية على كل يوم جديد؛ يمكنك تعديلها يومياً في أي وقت (مثال: استراحة مجزأة 15 دقيقة + 30 دقيقة).",
+      tabDays: "الأيام", tabHistory: "السجل",
+      historyTitle: "🕘 سجل الأشهر",
+      historyEmpty: "لا يوجد شهر محفوظ حالياً.",
+      labelDebut: "البداية", labelFin: "النهاية", labelConduite: "القيادة", labelPrestation: "الخدمة",
+      labelReel: "الفعلي (دقيقة)", labelPause: "الاستراحة (دقيقة)", labelNuitee: "المبيت", labelConge: "إجازة",
+      labelDispo: "التوفر",
+      sumConduite: "القيادة", sumDispo: "التوفر", sumTotal: "الإجمالي", sumPause: "الاستراحة",
+      sumTotalP45: "إجمالي P45", sumReel: "الفعلي", sumTotalReel: "إجمالي الفعلي", sumNuitees: "الليالي",
+      compareNetLabel: "الساعات المحسوبة (صافي):",
+      compareFicheLabel: "كشف الراتب + البدلات المحوّلة",
+      compareAjust: "+ تعديل:",
+      exportClicReceived: "⏳ تم استلام النقرة، جارٍ تحضير الملف...",
+      exportGenerating: "جارٍ إنشاء الملف...",
+      exportDownloaded: "✅ تم تنزيل الملف.",
+      exportDownloadFailed: "⚠️ فشل التنزيل المحلي أو تم رفضه.",
+      exportDownloadUnavailable: "⚠️ التنزيل المحلي غير متاح في هذا العرض.",
+      exportSendingDrive: "جارٍ الإرسال إلى Google Drive...",
+      exportOpenSheets: "📊 فتح في Google Sheets",
+      exportCopyLink: "📋 نسخ الرابط",
+      exportCopyHint: "إذا ظهرت رسالة \"تعذر فتح الملف\"، الصق الرابط المنسوخ مباشرة في المتصفح (Chrome/Safari) بدلاً من الضغط على الزر.",
+      exportCopySuccess: "✅ تم نسخ الرابط! الصقه في المتصفح.",
+      exportCopyFail: "⚠️ تعذر النسخ:",
+      exportSentDrive: "✅ تم إرسال الملف إلى Google Drive.",
+      errReauth: "⚠️ انتهت صلاحية اتصالك بـ Google Drive. أعد الاتصال من إعدادات Claude.",
+      errDriveFailed: "⚠️ فشل الإرسال إلى Google Drive.",
+      fatalError: "❌ خطأ أثناء التصدير:",
+      syncSending: "جارٍ الإرسال إلى Google Drive...",
+      syncSent: "✅ تم إرسال البيانات إلى Google Drive.",
+      syncSearching: "جارٍ البحث في Google Drive...",
+      syncNoData: "لم يتم العثور على بيانات في Drive. استخدم أولاً \"إرسال إلى Drive\".",
+      syncFoundConfirm: "تم العثور على بيانات في Drive. استرجاعها سيستبدل بيانات هذا الجهاز.",
+      syncConfirmYes: "✅ نعم، استبدل",
+      syncInvalidFile: "ملف غير صالح على Drive.",
+      syncRetrieved: "✅ تم استرجاع البيانات من Google Drive.",
+      errNotConnected: "Google Drive غير متصل بـ Claude.",
+      errNotGranted: "تم رفض إذن الوصول إلى Google Drive.",
+      errGeneric: "حدث خطأ أثناء المزامنة.",
+      driveUnavailable: "Google Drive غير متاح في هذا العرض.",
+      jours: ["الأحد","الاثنين","الثلاثاء","الأربعاء","الخميس","الجمعة","السبت"],
+      mois: ["يناير","فبراير","مارس","أبريل","مايو","يونيو","يوليو","أغسطس","سبتمبر","أكتوبر","نوفمبر","ديسمبر"],
+      csvHeader: ["اليوم","التاريخ","البداية","النهاية","القيادة","التوفر","المبيت","إجازة","الفعلي (دقيقة)","الاستراحة (دقيقة)","الإجمالي"],
+      csvOui: "نعم", csvNuitees: "ليالي", csvConges: "إجازات",
+      csvTotaux: "المجاميع", csvTotalP45: "إجمالي P45", csvTotalReel: "إجمالي الفعلي",
+      csvCompareTitle: "مقارنة كشف الراتب",
+      csvHeuresFiche: "ساعات كشف الراتب",
+      csvIndemSejour: "بدل الإقامة (€)", csvIndemRepas: "بدل الوجبات (€)",
+      csvCoefHoraire: "معامل الأجر بالساعة (€/س)", csvAjustManuel: "عدد الليالي", csvIndemNuit: "بدل الليلة (€)",
+      csvFicheConverties: "ساعات كشف الراتب + البدلات المحوّلة",
+      csvHeuresCalc: "الساعات المحسوبة (صافي)", csvDifference: "الفرق"
+    }
+  };
+  function T(){ return I18N[(state.settings && state.settings.lang) || "fr"] || I18N.fr; }
+  let JOURS = I18N.fr.jours;
+  let MOIS = I18N.fr.mois;
+
+  function defaultState(){
+    return {
+      settings: { nom: "Chauffeur", coefHoraire: 15.295, coefNuitee: 15.295, pause1: 15, pause2: 45, theme: "auto", lang: "fr", customColors: null },
+      months: {}
+    };
+  }
+
+  function load(){
+    try{
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if(!raw) return defaultState();
+      const parsed = JSON.parse(raw);
+      if(!parsed.settings) parsed.settings = defaultState().settings;
+      if(!parsed.months) parsed.months = {};
+      return parsed;
+    }catch(e){ console.error("load error", e); return defaultState(); }
+  }
+  function save(){
+    try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+    catch(e){ console.error("save error", e); }
+  }
+
+  let state = load();
+  let current = new Date();
+  current.setDate(1);
+
+  function monthKey(d){ return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0"); }
+  function ensureMonth(key){
+    if(!state.months[key]){
+      state.months[key] = { days:{}, fiche:{ heures:"", indemSejour:0, indemRepas:0, indemSejour2:0, ajust:0 } };
+    }
+    return state.months[key];
+  }
+
+  function timeToMin(t){
+    if(!t) return 0;
+    t = String(t).trim().replace(",",".");
+    if(t.includes(":")){
+      const parts = t.split(":");
+      return (parseInt(parts[0],10)||0)*60 + (parseInt(parts[1],10)||0);
+    }
+    if(/^\d{3,4}$/.test(t)){
+      const mm = t.slice(-2), hh = t.slice(0,-2);
+      return (parseInt(hh,10)||0)*60 + (parseInt(mm,10)||0);
+    }
+    const h = parseFloat(t);
+    return isNaN(h) ? 0 : Math.round(h*60);
+  }
+  function minToTime(m){
+    m = Math.round(m);
+    const neg = m<0; m = Math.abs(m);
+    const h = Math.floor(m/60), mm = m%60;
+    return (neg?"-":"")+h+"h"+String(mm).padStart(2,"0");
+  }
+  function minToHHMM(m){
+    m = Math.max(0,Math.round(m));
+    const h = Math.floor(m/60), mm = m%60;
+    return String(h).padStart(2,"0")+":"+String(mm).padStart(2,"0");
+  }
+  function minToHM(m){
+    m = Math.round(m);
+    const neg = m<0; m = Math.abs(m);
+    const h = Math.floor(m/60), mm = m%60;
+    return (neg?"-":"")+h+":"+String(mm).padStart(2,"0");
+  }
+  function updateLocale(){
+    JOURS = T().jours;
+    MOIS = T().mois;
+    document.documentElement.lang = state.settings.lang || "fr";
+    document.documentElement.dir = (state.settings.lang === "ar") ? "rtl" : "ltr";
+  }
+
+  function daysInMonth(d){
+    return new Date(d.getFullYear(), d.getMonth()+1, 0).getDate();
+  }
+
+  function easterSunday(year){
+    // Algorithme de Meeus/Jones/Butcher
+    const a = year % 19;
+    const b = Math.floor(year/100);
+    const c = year % 100;
+    const d = Math.floor(b/4);
+    const e = b % 4;
+    const f = Math.floor((b+8)/25);
+    const g = Math.floor((b-f+1)/3);
+    const h = (19*a + b - d - g + 15) % 30;
+    const i = Math.floor(c/4);
+    const k = c % 4;
+    const l = (32 + 2*e + 2*i - h - k) % 7;
+    const m = Math.floor((a + 11*h + 22*l)/451);
+    const month = Math.floor((h + l - 7*m + 114)/31); // 3=mars, 4=avril
+    const day = ((h + l - 7*m + 114) % 31) + 1;
+    return new Date(year, month-1, day);
+  }
+  function addDays(date, n){
+    const d = new Date(date);
+    d.setDate(d.getDate()+n);
+    return d;
+  }
+  function belgianHolidays(year){
+    const easter = easterSunday(year);
+    const toStr = (d)=> d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+    return new Set([
+      year+"-01-01",           // Jour de l'An
+      toStr(addDays(easter,1)),// Lundi de Pâques
+      year+"-05-01",           // Fête du Travail
+      toStr(addDays(easter,39)),// Ascension
+      toStr(addDays(easter,50)),// Lundi de Pentecôte
+      year+"-07-21",           // Fête nationale
+      year+"-08-15",           // Assomption
+      year+"-11-01",           // Toussaint
+      year+"-11-11",           // Armistice
+      year+"-12-25"            // Noël
+    ]);
+  }
+  function isBelgianHoliday(dateStr){
+    const year = parseInt(dateStr.slice(0,4),10);
+    return belgianHolidays(year).has(dateStr);
+  }
+
+  function dayEntry(monthObj, dateStr){
+    if(!monthObj.days[dateStr]){
+      monthObj.days[dateStr] = {
+        conge:false, conduite:"", total:"",
+        pause1: state.settings.pause1, pause2: state.settings.pause2,
+        nuitee:false
+      };
+    }
+    return monthObj.days[dateStr];
+  }
+
+  function renderMonthLabel(){
+    document.getElementById("monthLabel").textContent = MOIS[current.getMonth()]+" "+current.getFullYear();
+  }
+
+  function splitHM(v){
+    const total = timeToMin(v);
+    return { h: Math.floor(total/60), m: total%60 };
+  }
+  function hmInputs(cls, value){
+    const {h,m} = splitHM(value);
+    return `<div class="hm-group">
+      <input type="number" inputmode="numeric" min="0" class="${cls}-h" placeholder="h" value="${value?h:""}">
+      <span>h</span>
+      <input type="number" inputmode="numeric" min="0" max="59" class="${cls}-m" placeholder="min" value="${value?m:""}">
+      <span>min</span>
+    </div>`;
+  }
+
+  // Coupure de 11 h : repos entre la fin de ce jour et le début du jour suivant
+  function coupure11hOK(d, entry){
+    if(d.getDay()===5) return false; // le vendredi reste toujours blanc
+    if(!entry || entry.conge || !entry.debut || !entry.fin) return false;
+    const next = new Date(d.getFullYear(), d.getMonth(), d.getDate()+1);
+    const nKey = monthKey(next);
+    const nStr = nKey+"-"+String(next.getDate()).padStart(2,"0");
+    const nEntry = state.months[nKey] && state.months[nKey].days[nStr];
+    if(!nEntry || !nEntry.debut) return false;
+    const deb = timeToMin(entry.debut);
+    let fin = timeToMin(entry.fin);
+    if(fin < deb) fin += 1440; // fin après minuit
+    const debutSuivant = timeToMin(nEntry.debut) + 1440;
+    return (debutSuivant - fin) >= 660;
+  }
+
+  let openDate = null;
+
+  function renderDays(){
+    const key = monthKey(current);
+    const monthObj = ensureMonth(key);
+    const list = document.getElementById("daysList");
+    list.innerHTML = "";
+    const n = daysInMonth(current);
+    let totals = {conduite:0, liaison:0, total:0, pause:0, pause2:0, reel:0, nuitees:0, conges:0};
+    for(let day=1; day<=n; day++){
+      const d = new Date(current.getFullYear(), current.getMonth(), day);
+      const dateStr = d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(day).padStart(2,"0");
+      const dow = d.getDay();
+      const isWeekend = (dow===0 || dow===6);
+      let entry = monthObj.days[dateStr];
+      if(!entry && isBelgianHoliday(dateStr)){
+        entry = dayEntry(monthObj, dateStr);
+        entry.conge = true;
+        save();
+      }
+
+      let cMin=0, tMin=0, pMin=0, liaison=0;
+      if(entry){
+        cMin = timeToMin(entry.conduite);
+        tMin = timeToMin(entry.total);
+        pMin = (parseInt(entry.pause1,10)||0) + (parseInt(entry.pause2,10)||0);
+        liaison = Math.max(0, tMin - cMin);
+        if(!entry.conge){
+          totals.conduite += cMin;
+          totals.total += tMin;
+          totals.liaison += liaison;
+          totals.pause += pMin;
+          totals.pause2 += (parseInt(entry.pause2,10)||0);
+          totals.reel += (parseInt(entry.pause1,10)||0);
+          if(entry.nuitee) totals.nuitees += 1;
+          if(entry.conge) totals.conges += 1;
+        }
+      }
+
+      const card = document.createElement("div");
+      const conduiteMin = entry ? timeToMin(entry.conduite) : 0;
+      const isAlert = !!(entry && entry.conduite && conduiteMin>=540 && conduiteMin<=600);
+      const isOver = !!(entry && entry.conduite && conduiteMin>600); // plus de 10 h : infraction
+      const isConge = !!(entry && entry.conge);
+      card.className = "day-card"+(isWeekend?" weekend":"")+(dayLocked(dateStr)?" day-locked":"");
+      if(isConge) card.style.background = "#fde047";
+      else if(isOver){ card.style.background = "#b91c1c"; card.classList.add("over10"); }
+      else if(isAlert) card.style.background = "#fca5a5";
+      else if(coupure11hOK(d, entry)) card.classList.add("repos-ok");
+      // Week-end travaillé : toute la carte en vert pâle (sauf congé ou infraction +10 h)
+      const workedWE = isWeekend && !!(entry && !entry.conge && (entry.conduite || entry.total || entry.debut || entry.fin));
+      if(workedWE && !isOver){
+        card.style.background = "#bbf7d0";
+        card.classList.remove("repos-ok");
+        card.classList.add("we-worked");
+      }
+
+      const chips = [];
+      if(entry && (entry.conduite||entry.total)) {
+        if(isOver) chips.push('<span class="chip" style="background:#fff;color:#b91c1c;">⛔ +10h</span>');
+        if(entry.conduite) chips.push('<span class="chip">🚚 '+minToHM(timeToMin(entry.conduite))+'</span>');
+        if(entry.total) chips.push('<span class="chip">Σ '+entry.total+'</span>');
+        if(entry.nuitee) chips.push('<span class="chip gray">🌙</span>');
+      }
+
+      card.innerHTML = `
+        <div class="day-head" data-date="${dateStr}">
+          <div>
+            <div class="dname">${JOURS[dow]}</div>
+            <div class="ddate">${String(day).padStart(2,"0")}/${String(current.getMonth()+1).padStart(2,"0")}</div>
+          </div>
+          <div style="display:flex; align-items:center;">
+            <div class="chips">${chips.join("")}</div>
+            <button type="button" class="day-close" title="Fermer">✕</button>
+          </div>
+        </div>
+        <div class="day-body" id="body-${dateStr}">
+          <div class="field-row">
+            <div class="field">
+              <label>${T().labelDebut}</label>
+              <input type="text" inputmode="numeric" class="f-debut-hhmm" placeholder="hh:mm" value="${entry&&entry.debut?entry.debut:''}">
+            </div>
+            <div class="field">
+              <label>${T().labelFin}</label>
+              <input type="text" inputmode="numeric" class="f-fin-hhmm" placeholder="hh:mm" value="${entry&&entry.fin?entry.fin:''}">
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label>${T().labelConduite}</label>
+              <input type="text" inputmode="numeric" class="f-conduite-hhmm" placeholder="hh:mm" value="${entry&&entry.conduite?entry.conduite:''}">
+            </div>
+            <div class="field">
+              <label>${T().labelPrestation}</label>
+              <input type="text" inputmode="numeric" class="f-total-hhmm" placeholder="hh:mm" value="${entry&&entry.total?entry.total:''}">
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label>${T().labelReel}</label>
+              <input type="number" class="f-pause1" value="${entry?entry.pause1:15}">
+            </div>
+            <div class="field">
+              <label>${T().labelPause}</label>
+              <input type="number" class="f-pause2" value="${entry?entry.pause2:45}">
+            </div>
+          </div>
+          <div class="toggle-row">
+            <span>${T().labelNuitee}</span>
+            <label class="switch"><input type="checkbox" class="f-nuitee" ${entry&&entry.nuitee?"checked":""}><span class="slider"></span></label>
+          </div>
+          <div class="toggle-row">
+            <span>${T().labelConge}</span>
+            <label class="switch"><input type="checkbox" class="f-conge" ${entry&&entry.conge?"checked":""}><span class="slider"></span></label>
+          </div>
+          <div class="computed-row">
+            <span>${T().labelDispo}: <b>${minToTime(liaison)}</b></span>
+          </div>
+        </div>
+      `;
+      // Samedi et dimanche côte à côte sur une même ligne
+      let target = list;
+      if(dow===6 || dow===0){
+        let row = list.lastElementChild;
+        if(!(dow===0 && row && row.classList.contains("weekend-row") && row.childElementCount===1)){
+          row = document.createElement("div");
+          row.className = "weekend-row";
+          list.appendChild(row);
+        }
+        if(dow===0) card.classList.add("sunday");
+        target = row;
+      }
+      target.appendChild(card);
+      if(dow===0){
+        const spacer = document.createElement("div");
+        spacer.className = "day-card";
+        spacer.style.visibility = "hidden";
+        spacer.style.padding = "0";
+        spacer.style.border = "none";
+        spacer.style.boxShadow = "none";
+        spacer.style.height = "12px";
+        list.appendChild(spacer);
+      }
+
+      const head = card.querySelector(".day-head");
+      const body = card.querySelector(".day-body");
+      if(openDate === dateStr){
+        body.classList.add("open");
+        card.classList.add("popup");
+        // garde la place de la carte dans la liste pendant qu'elle est ouverte
+        const ph = document.createElement("div");
+        ph.className = "day-placeholder";
+        card.parentNode.insertBefore(ph, card);
+      }
+      head.addEventListener("click", ()=>{
+        openDate = (openDate === dateStr) ? null : dateStr;
+        renderDays();
+      });
+
+      const bind = (sel, prop, isCheckbox, isNumber) => {
+        const el = card.querySelector(sel);
+        el.addEventListener("change", ()=>{
+          const e = dayEntry(monthObj, dateStr);
+          e[prop] = isCheckbox ? el.checked : (isNumber ? (parseInt(el.value,10)||0) : el.value);
+          save();
+          renderDays();
+          renderSummary();
+        });
+      };
+      const bindHM = (cls, prop) => {
+        const hEl = card.querySelector(cls+"-h");
+        const mEl = card.querySelector(cls+"-m");
+        [hEl, mEl].forEach(el=>{
+          el.addEventListener("change", ()=>{
+            const e = dayEntry(monthObj, dateStr);
+            const h = parseInt(hEl.value,10)||0;
+            const m = parseInt(mEl.value,10)||0;
+            e[prop] = (h===0 && m===0 && hEl.value==="" && mEl.value==="") ? "" : minToHHMM(h*60+m);
+            save();
+            renderDays();
+            renderSummary();
+          });
+        });
+      };
+      function bindHHMM(cls, prop){
+        const el = card.querySelector(cls);
+        if(!el) return;
+        el.addEventListener("input", ()=>{
+          let digits = el.value.replace(/\D/g,"").slice(0,4);
+          if(digits.length<=2){
+            el.value = digits;
+          } else {
+            el.value = digits.slice(0,2)+":"+digits.slice(2);
+          }
+          if(prop==="conduite"){
+            const cm = timeToMin(el.value);
+            if(card.classList.contains("weekend")) card.style.background = (el.value && cm>600) ? "#b91c1c" : (el.value ? "#bbf7d0" : "");
+            else card.style.background = (el.value && cm>600) ? "#b91c1c" : ((el.value && cm>=540 && cm<=600) ? "#fca5a5" : "");
+          }
+        });
+        el.addEventListener("change", ()=>{
+          const e = dayEntry(monthObj, dateStr);
+          const raw = el.value.trim();
+          e[prop] = raw==="" ? "" : minToHHMM(timeToMin(raw));
+          save();
+          renderDays();
+          renderSummary();
+        });
+      }
+      bindHHMM(".f-conduite-hhmm","conduite");
+      bindHHMM(".f-total-hhmm","total");
+      bindHHMM(".f-debut-hhmm","debut");
+      bindHHMM(".f-fin-hhmm","fin");
+      bind(".f-pause1","pause1",false,true);
+      bind(".f-pause2","pause2",false,true);
+      bind(".f-nuitee","nuitee",true,false);
+      bind(".f-conge","conge",true,false);
+    }
+
+    // Fond assombri derrière la fenêtre du jour : un clic dessus la ferme
+    let backdrop = document.getElementById("dayBackdrop");
+    if(!backdrop){
+      backdrop = document.createElement("div");
+      backdrop.id = "dayBackdrop";
+      backdrop.style.cssText = "position:fixed;inset:0;z-index:59;display:none;";
+      backdrop.addEventListener("click", ()=>{ openDate = null; renderDays(); });
+      document.body.appendChild(backdrop);
+    }
+    const hasPopup = !!list.querySelector(".day-card.popup");
+    backdrop.style.display = hasPopup ? "block" : "none";
+    document.body.style.overflow = hasPopup ? "hidden" : "";
+    applyReadonly();
+
+    return totals;
+  }
+
+  function renderSummary(){
+    const totals = computeTotals();
+    const t = T();
+    const grid = document.getElementById("summaryGrid");
+    grid.innerHTML = `
+      <div class="sum-card"><div class="lab">${t.sumConduite}</div><div class="val">${minToHM(totals.conduite)}</div></div>
+      <div class="sum-card"><div class="lab">${t.sumDispo}</div><div class="val">${minToTime(totals.liaison)}</div></div>
+      <div class="sum-card"><div class="lab">${t.sumTotal}</div><div class="val">${minToTime(totals.total)}</div></div>
+      <div class="sum-card"><div class="lab">${t.sumPause}</div><div class="val">${minToTime(totals.pause2)}</div></div>
+      <div class="sum-card"></div>
+      <div class="sum-card"><div class="lab">${t.sumTotalP45}</div><div class="val">${minToTime(Math.max(0,totals.total-totals.pause2))}</div></div>
+      <div class="sum-card"><div class="lab">${t.sumReel}</div><div class="val">${minToTime(totals.reel)}</div></div>
+      <div class="sum-card"></div>
+      <div class="sum-card" style="background:var(--accent2);"><div class="lab">${t.sumTotalReel}</div><div class="val">${minToTime(Math.max(0,totals.total-totals.reel))}</div></div>
+      <div class="sum-card"><div class="lab">${t.sumNuitees}</div><div class="val">${totals.nuitees}</div></div>
+    `;
+  }
+
+  function computeTotals(){
+    const key = monthKey(current);
+    const monthObj = ensureMonth(key);
+    let totals = {conduite:0, liaison:0, total:0, pause:0, pause2:0, reel:0, nuitees:0, conges:0};
+    Object.keys(monthObj.days).forEach(dateStr=>{
+      if(!dateStr.startsWith(key)) return;
+      const entry = monthObj.days[dateStr];
+      if(entry.conge) return;
+      const cMin = timeToMin(entry.conduite), tMin = timeToMin(entry.total);
+      const pMin = (parseInt(entry.pause1,10)||0)+(parseInt(entry.pause2,10)||0);
+      totals.conduite += cMin;
+      totals.total += tMin;
+      totals.liaison += Math.max(0, tMin-cMin);
+      totals.pause += pMin;
+      totals.pause2 += (parseInt(entry.pause2,10)||0);
+      totals.reel += (parseInt(entry.pause1,10)||0);
+      if(entry.nuitee) totals.nuitees += 1;
+          if(entry.conge) totals.conges += 1;
+    });
+    return totals;
+  }
+
+  function renderFicheFields(){
+    const key = monthKey(current);
+    const monthObj = ensureMonth(key);
+    document.getElementById("ficheHeuresWrap").innerHTML =
+      '<input type="text" inputmode="numeric" class="fiche-heures-hhmm" placeholder="hhh:mm" value="'+(monthObj.fiche.heures||"")+'">';
+    document.getElementById("indemSejour").value = monthObj.fiche.indemSejour || 0;
+    document.getElementById("indemRepas").value = monthObj.fiche.indemRepas || 0;
+    document.getElementById("ajustManuel").value = monthObj.fiche.ajust || 0;
+    monthObj.fiche.indemSejour2 = Math.round((parseFloat(monthObj.fiche.ajust)||0) * (state.settings.coefNuitee||0) * 100)/100;
+    document.getElementById("indemSejour2").value = monthObj.fiche.indemSejour2;
+
+    const ficheEl = document.querySelector(".fiche-heures-hhmm");
+    ficheEl.addEventListener("input", ()=>{
+      let digits = ficheEl.value.replace(/\D/g,"").slice(0,5);
+      if(digits.length<=2){
+        ficheEl.value = digits;
+      } else {
+        ficheEl.value = digits.slice(0,-2)+":"+digits.slice(-2);
+      }
+    });
+    ficheEl.addEventListener("change", ()=>{
+      const raw = ficheEl.value.trim();
+      monthObj.fiche.heures = raw==="" ? "" : minToHHMM(timeToMin(raw));
+      save();
+      renderCompare();
+    });
+    renderCompare();
+  }
+
+  function renderCompare(){
+    const key = monthKey(current);
+    const monthObj = ensureMonth(key);
+    // Rien n'est affiché tant que les heures totales de la fiche ne sont pas saisies
+    if(!monthObj.fiche.heures){
+      document.getElementById("compareResult").innerHTML = "";
+      return;
+    }
+    const totals = computeTotals();
+    const netCalcule = Math.max(0, totals.total - totals.reel); // minutes
+    const coef = state.settings.coefHoraire || 1;
+    const indemHeures = ((parseFloat(monthObj.fiche.indemSejour)||0) + (parseFloat(monthObj.fiche.indemRepas)||0) + (parseFloat(monthObj.fiche.indemSejour2)||0)) / coef; // in hours
+    const ficheMin = timeToMin(monthObj.fiche.heures) + indemHeures*60;
+    const diffMin = ficheMin - netCalcule;
+    const cls = diffMin>=0 ? "pos" : "neg";
+    const sign = diffMin>=0 ? "+" : "";
+    document.getElementById("compareResult").innerHTML = `
+      <div style="margin-top:10px; font-size:.82rem; color:var(--muted);">
+        ${T().compareNetLabel} <b style="color:var(--text)">${minToTime(netCalcule)}</b><br>
+        ${T().compareFicheLabel} (${minToTime(indemHeures*60)}) ${T().compareAjust} <b style="color:var(--text)">${minToTime(ficheMin)}</b>
+      </div>
+      <div class="diff ${cls}">${sign}${minToTime(diffMin)}</div>
+    `;
+  }
+
+  function applyStaticI18n(){
+    const t = T();
+    document.getElementById("driverName").textContent = state.settings.nom || t.driverDefault;
+    document.querySelector(".title").textContent = "🚛 "+t.appName;
+    document.getElementById("btnSettings").title = t.settingsTitleBtn;
+    document.querySelector(".section h3").textContent = t.comparisonTitle;
+    const labels = document.querySelectorAll(".section .field-row .field label");
+    if(labels[0]) labels[0].textContent = t.labelHeuresFiche;
+    if(labels[1]) labels[1].textContent = t.labelIndemSejour;
+    if(labels[2]) labels[2].textContent = t.labelIndemRepas;
+    if(labels[3]) labels[3].textContent = t.labelAjustManuel;
+    if(labels[4]) labels[4].textContent = t.labelIndemNuit;
+    document.getElementById("btnRecalc").textContent = t.btnRecalc;
+    document.getElementById("btnSync").textContent = t.btnSync;
+    document.getElementById("btnExport").textContent = t.btnExport;
+    document.querySelector("#syncModal h2").textContent = t.syncModalTitle;
+    document.querySelector("#syncModal p").textContent = t.syncModalDesc;
+    document.getElementById("btnSyncDown").textContent = t.btnSyncDown;
+    document.getElementById("btnSyncUp").textContent = t.btnSyncUp;
+    document.getElementById("btnCloseSync").textContent = t.btnClose;
+    document.querySelector("#menuModal h2").textContent = t.menuTitle;
+    document.getElementById("menuGoSettings").textContent = t.menuGoSettings;
+    document.getElementById("menuGoAppearance").textContent = t.menuGoAppearance;
+    document.getElementById("menuGoHelp").textContent = t.menuGoHelp;
+    document.getElementById("btnCloseMenu").textContent = t.btnClose;
+    document.querySelector("#appearanceModal h2").textContent = t.appearanceTitle;
+    document.querySelector("#appearanceModal .field label").textContent = t.labelTheme;
+    const themeOpts = document.querySelectorAll("#setTheme option");
+    if(themeOpts[0]) themeOpts[0].textContent = t.themeAuto;
+    if(themeOpts[1]) themeOpts[1].textContent = t.themeLight;
+    if(themeOpts[2]) themeOpts[2].textContent = t.themeDark;
+    const langLabel = document.getElementById("labelLangEl");
+    if(langLabel) langLabel.textContent = t.labelLang;
+    document.getElementById("labelCustomColorsEl").textContent = t.labelCustomColors;
+    document.getElementById("labelBgEl").textContent = t.labelBg;
+    document.getElementById("labelCardEl").textContent = t.labelCard;
+    document.getElementById("labelTextEl").textContent = t.labelText;
+    document.getElementById("labelAccentEl").textContent = t.labelAccent;
+    document.getElementById("labelAccent2El").textContent = t.labelAccent2;
+    document.getElementById("btnResetColors").textContent = t.btnResetColors;
+    document.getElementById("btnCloseAppearance").textContent = t.btnSaveClose;
+    document.querySelector("#helpModal h2").textContent = t.helpTitle;
+    const helpPs = document.querySelectorAll("#helpModal .modal > div p");
+    ["help1","help2","help3","help4","help5","help6","help7","help9","help10"].forEach((k,i)=>{
+      if(helpPs[i]) helpPs[i].innerHTML = t[k];
+    });
+    document.getElementById("btnCloseHelp").textContent = t.btnClose;
+    document.querySelector("#settingsModal h2").textContent = t.settingsTitle;
+    const setLabels = document.querySelectorAll("#settingsModal .field label");
+    if(setLabels[0]) setLabels[0].textContent = t.labelNom;
+    if(setLabels[1]) setLabels[1].textContent = t.labelCoefHoraire;
+    if(setLabels[2]) setLabels[2].textContent = t.labelCoefNuitee;
+    if(setLabels[3]) setLabels[3].textContent = t.labelReelDefaut;
+    if(setLabels[4]) setLabels[4].textContent = t.labelPauseDefaut;
+    document.getElementById("btnCloseSettings").textContent = t.btnSaveClose;
+    document.querySelector("#settingsModal .hint").textContent = t.settingsHint;
+    document.querySelector("#tabDays .ic").nextSibling.textContent = t.tabDays;
+    document.querySelector("#tabHistory .ic").nextSibling.textContent = t.tabHistory;
+    document.querySelector("#historyModal h2").textContent = t.historyTitle;
+    document.getElementById("btnCloseHistory").textContent = t.btnClose;
+  }
+
+  // ===== Abonnement =====
+  // Lien PayPal.me : remplace "TonNomPaypal" par ton identifiant PayPal.me
+  const PAYPAL_ME = "TonNomPaypal";
+  // Clé secrète partagée avec le générateur de codes (à garder pour toi)
+  const SUB_SECRET = "MH-SDC-2026-k7Qp";
+  const CODE_ALPHA = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  const MOIS_FR = I18N.fr.mois;
+
+  function cyrb53(str, seed){
+    let h1 = 0xdeadbeef ^ seed, h2 = 0x41c6ce57 ^ seed;
+    for(let i=0;i<str.length;i++){
+      const ch = str.charCodeAt(i);
+      h1 = Math.imul(h1 ^ ch, 2654435761);
+      h2 = Math.imul(h2 ^ ch, 1597334677);
+    }
+    h1 = Math.imul(h1 ^ (h1>>>16), 2246822507) ^ Math.imul(h2 ^ (h2>>>13), 3266489909);
+    h2 = Math.imul(h2 ^ (h2>>>16), 2246822507) ^ Math.imul(h1 ^ (h1>>>13), 3266489909);
+    return 4294967296 * (2097151 & h2) + (h1>>>0);
+  }
+  // period = "2026-10" (mensuel, valable jusqu'à la fin de ce mois), "Y2026" (annuel) ou "OWNER" (propriétaire)
+  // Le code contient toujours : majuscules, minuscules, chiffres et un symbole (10 caractères, sensible à la casse)
+  const C_UP = "ABCDEFGHJKLMNPQRSTUVWXYZ", C_LO = "abcdefghijkmnpqrstuvwxyz", C_DI = "23456789", C_SY = "!@#$%&*?+=";
+  const C_ALL = C_UP + C_LO + C_DI + C_SY;
+  function makeCode(clientId, period){
+    const base = SUB_SECRET+"|"+String(clientId).toUpperCase()+"|"+period;
+    const pick = (set, i) => set[cyrb53(base, 100+i) % set.length];
+    const chars = [pick(C_UP,0), pick(C_LO,1), pick(C_DI,2), pick(C_SY,3), pick(C_UP,4), pick(C_LO,5), pick(C_DI,6)];
+    for(let i=7;i<10;i++) chars.push(pick(C_ALL,i));
+    // mélange déterministe pour ne pas avoir toujours le même ordre
+    for(let i=chars.length-1;i>0;i--){
+      const j = cyrb53(base, 200+i) % (i+1);
+      const tmp = chars[i]; chars[i] = chars[j]; chars[j] = tmp;
+    }
+    return chars.join("");
+  }
+  function normCode(c){ return String(c||"").replace(/\s+/g,""); }
+  // ===== Protections contre le changement de date =====
+  // 1) On retient la date la plus récente déjà vue : reculer l'horloge du téléphone ne fait pas revenir en arrière.
+  // 2) Quand Internet est disponible, on utilise l'heure du serveur qui héberge l'application.
+  let netOffset = null;          // écart (ms) entre l'heure du serveur et celle de l'appareil
+  let clockBehind = false;       // l'horloge de l'appareil est en retard sur l'heure fiable
+  function nowMs(){
+    const device = Date.now();
+    const last = Number(state.settings && state.settings.lastSeen) || 0;
+    // Heure Internet disponible : c'est elle qui fait foi. Sinon : jamais avant la dernière date connue.
+    const t = netOffset !== null ? device + netOffset : Math.max(device, last);
+    clockBehind = (t - device) > 6*3600000; // plus de 6 h de retard
+    return t;
+  }
+  function nowDate(){ return new Date(nowMs()); }
+  function rememberNow(){
+    const t = nowMs();
+    if(!state.settings.lastSeen || t > state.settings.lastSeen || netOffset !== null){
+      state.settings.lastSeen = t;
+      save();
+    }
+  }
+  async function syncNetTime(){
+    try{
+      const url = location.href.split("#")[0];
+      const sep = url.includes("?") ? "&" : "?";
+      const t0 = Date.now();
+      const res = await fetch(url + sep + "t=" + t0, { method:"HEAD", cache:"no-store" });
+      const t1 = Date.now();
+      const hdr = res.headers.get("Date");
+      if(!hdr) return;
+      const server = Date.parse(hdr);
+      if(isNaN(server)) return;
+      netOffset = server - (t0 + t1)/2;
+      rememberNow();
+      renderLock();
+    }catch(e){ /* hors connexion ou indisponible : on garde la date mémorisée */ }
+  }
+
+  function realMonthKey(){ return monthKey(nowDate()); }
+  function realYear(){ return String(nowDate().getFullYear()); }
+
+  function ensureSub(){
+    if(!state.settings.clientId){
+      let id = "MH-";
+      const rnd = new Uint32Array(6);
+      try{ crypto.getRandomValues(rnd); }catch(e){ for(let i=0;i<6;i++) rnd[i]=Math.floor(Math.random()*1e9); }
+      for(let i=0;i<6;i++) id += CODE_ALPHA[rnd[i] % 32];
+      state.settings.clientId = id;
+      save();
+    }
+    if(!state.subscription) state.subscription = { unlocked:{} };
+    if(!state.subscription.unlocked) state.subscription.unlocked = {};
+  }
+  function isValidFor(period){
+    const saved = state.subscription && state.subscription.unlocked[period];
+    return !!saved && normCode(saved) === makeCode(state.settings.clientId, period);
+  }
+  function hasYear(y){ return isValidFor("Y"+y); }
+  // Abonnement mensuel : couvre le mois civil en cours, jusqu'au dernier jour du mois
+  function hasCurrentMonth(){ return isValidFor(realMonthKey()); }
+  // Accès propriétaire : tout est débloqué, sans limite de temps
+  function isOwner(){ return isValidFor("OWNER"); }
+  function monthAccessible(key){
+    if(isOwner()) return true;
+    if(hasYear(key.slice(0,4))) return true;
+    return key === realMonthKey() && hasCurrentMonth();
+  }
+  function dayLocked(dateStr){ return false; }
+  // Mois passés sans abonnement couvrant ce mois : visibles, mais en lecture seule (aucune modification)
+  function isReadonlyMonth(key){
+    key = key || monthKey(current);
+    return !monthAccessible(key) && key < realMonthKey();
+  }
+  function applyReadonly(){
+    const ro = isReadonlyMonth();
+    document.querySelector(".wrap").classList.toggle("readonly", ro);
+    document.querySelectorAll("#daysList input, .section input").forEach(el=>{
+      if(ro) el.disabled = true;
+      else if(el.id !== "indemSejour2") el.disabled = false;
+    });
+  }
+  function moisLabel(key){ return MOIS_FR[parseInt(key.slice(5,7),10)-1]+" "+key.slice(0,4); }
+  function finDuMois(key){
+    const y = parseInt(key.slice(0,4),10), m = parseInt(key.slice(5,7),10);
+    const last = new Date(y, m, 0).getDate();
+    return String(last).padStart(2,"0")+"/"+String(m).padStart(2,"0")+"/"+y;
+  }
+
+  function subStatusText(){
+    const y = realYear(), mk = realMonthKey();
+    if(isOwner()) return "👑 <b>Accès propriétaire</b> : tous les jours et tous les mois sont débloqués, sans limite.";
+    if(hasYear(y)) return "✅ Abonnement <b>annuel "+y+"</b> actif : les 12 mois de "+y+" sont débloqués, jusqu'au 31/12/"+y+".";
+    if(hasCurrentMonth()) return "✅ Abonnement <b>mensuel</b> actif pour <b>"+moisLabel(mk)+"</b>, jusqu'au "+finDuMois(mk)+". Un nouveau code sera demandé au début du mois suivant.";
+    return "⛔ Aucun abonnement actif pour "+moisLabel(mk)+".";
+  }
+
+  function renderLock(){
+    ensureSub();
+    rememberNow();
+    const key = monthKey(current);
+    const readonly = isReadonlyMonth(key);
+    const ok = monthAccessible(key) || readonly;
+    const wrap = document.querySelector(".wrap");
+    const pw = document.getElementById("paywall");
+    wrap.classList.toggle("locked", !ok);
+    const tb = document.getElementById("trialBanner");
+    if(clockBehind){
+      tb.textContent = "⚠️ La date de ton appareil est incorrecte. L'application utilise la dernière date connue ("+String(nowDate().getDate()).padStart(2,"0")+"/"+String(nowDate().getMonth()+1).padStart(2,"0")+"/"+nowDate().getFullYear()+").";
+      tb.style.display = "block";
+    } else if(readonly){
+      tb.textContent = "📖 "+moisLabel(key)+" : lecture seule. Tu peux consulter tes heures, mais plus les modifier. Appuie ici pour l'abonnement annuel.";
+      tb.style.display = "block";
+    } else {
+      tb.style.display = "none";
+    }
+    applyReadonly();
+    pw.style.display = ok ? "none" : "block";
+    if(!ok){
+      let txt;
+      if(hasCurrentMonth() && !hasYear(key.slice(0,4))){
+        txt = "Ton abonnement mensuel couvre uniquement "+moisLabel(realMonthKey())+". Passe à l'abonnement annuel (10 €) pour débloquer tous les mois de l'année.";
+      } else {
+        txt = moisLabel(key)+" est verrouillé. Abonne-toi pour 0,99 € (mois en cours) ou 10 € (toute l'année).";
+      }
+      document.getElementById("paywallText").textContent = txt;
+    }
+  }
+
+  function openSubModal(){
+    ensureSub();
+    const id = state.settings.clientId;
+    document.getElementById("subClientId").textContent = id;
+    document.getElementById("subStatus").innerHTML = subStatusText();
+    const note = encodeURIComponent(id);
+    document.getElementById("payMonth").href = "https://paypal.me/"+PAYPAL_ME+"/0.99EUR";
+    document.getElementById("payYear").href = "https://paypal.me/"+PAYPAL_ME+"/10EUR";
+    document.getElementById("subCode").value = "";
+    document.getElementById("subMsg").textContent = "";
+    document.getElementById("subModal").classList.add("open");
+  }
+
+  document.getElementById("btnPaywallOpen").addEventListener("click", openSubModal);
+  // Mémorise régulièrement la date et revérifie l'heure Internet
+  document.getElementById("trialBanner").addEventListener("click", ()=>{ if(isReadonlyMonth()) openSubModal(); });
+  setInterval(()=>{ rememberNow(); renderLock(); }, 60000);
+  setInterval(syncNetTime, 30*60000);
+  window.addEventListener("online", syncNetTime);
+  document.addEventListener("visibilitychange", ()=>{ if(!document.hidden) syncNetTime(); });
+  document.getElementById("menuGoSub").addEventListener("click", ()=>{
+    document.getElementById("menuModal").classList.remove("open");
+    openSubModal();
+  });
+  document.getElementById("btnCloseSub").addEventListener("click", ()=>{
+    document.getElementById("subModal").classList.remove("open");
+  });
+  document.getElementById("btnSubValidate").addEventListener("click", ()=>{
+    ensureSub();
+    const msg = document.getElementById("subMsg");
+    const entered = normCode(document.getElementById("subCode").value); // majuscules/minuscules respectées
+    const id = state.settings.clientId;
+    const mk = realMonthKey(), yk = "Y"+realYear();
+    if(entered && entered === makeCode(id, "OWNER")){
+      state.subscription.unlocked["OWNER"] = makeCode(id, "OWNER");
+      msg.textContent = "👑 Accès propriétaire activé : tout est débloqué !";
+    } else if(entered && entered === makeCode(id, yk)){
+      state.subscription.unlocked[yk] = makeCode(id, yk);
+      msg.textContent = "✅ Abonnement annuel "+realYear()+" activé !";
+    } else if(entered && entered === makeCode(id, mk)){
+      state.subscription.unlocked[mk] = makeCode(id, mk);
+      msg.textContent = "✅ Abonnement mensuel activé pour "+moisLabel(mk)+", jusqu'au "+finDuMois(mk)+" !";
+    } else {
+      msg.textContent = "❌ Code invalide pour ce numéro client et ce mois. Attention aux majuscules, minuscules et symboles.";
+      return;
+    }
+    save();
+    document.getElementById("subStatus").innerHTML = subStatusText();
+    current = nowDate(); current.setDate(1);
+    openDate = null;
+    renderAll();
+  });
+
+  function renderAll(){
+    updateLocale();
+    applyStaticI18n();
+    document.getElementById("driverName").textContent = state.settings.nom || T().driverDefault;
+    renderMonthLabel();
+    renderDays();
+    renderSummary();
+    renderFicheFields();
+    renderLock();
+  }
+
+  // Menu principal (roue des paramètres)
+  document.getElementById("btnSettings").addEventListener("click", ()=>{
+    document.getElementById("menuModal").classList.add("open");
+  });
+  document.getElementById("btnCloseMenu").addEventListener("click", ()=>{
+    document.getElementById("menuModal").classList.remove("open");
+  });
+
+  document.getElementById("menuGoSettings").addEventListener("click", ()=>{
+    document.getElementById("menuModal").classList.remove("open");
+    document.getElementById("setNom").value = state.settings.nom;
+    document.getElementById("setCoefHoraire").value = state.settings.coefHoraire;
+    document.getElementById("setCoefNuitee").value = state.settings.coefNuitee!==undefined?state.settings.coefNuitee:state.settings.coefHoraire;
+    document.getElementById("setPause1").value = state.settings.pause1;
+    document.getElementById("setPause2").value = state.settings.pause2;
+    document.getElementById("settingsModal").classList.add("open");
+  });
+
+  document.getElementById("menuGoAppearance").addEventListener("click", ()=>{
+    document.getElementById("menuModal").classList.remove("open");
+    document.getElementById("setTheme").value = state.settings.theme || "auto";
+    document.getElementById("setLang").value = state.settings.lang || "fr";
+    populateColorInputs();
+    document.getElementById("appearanceModal").classList.add("open");
+  });
+  document.getElementById("btnCloseAppearance").addEventListener("click", ()=>{
+    state.settings.theme = document.getElementById("setTheme").value || "auto";
+    state.settings.lang = document.getElementById("setLang").value || "fr";
+    if(document.getElementById("setCustomColorsToggle").checked){
+      state.settings.customColors = {
+        bg: document.getElementById("colBg").value,
+        card: document.getElementById("colCard").value,
+        text: document.getElementById("colText").value,
+        accent: document.getElementById("colAccent").value,
+        accent2: document.getElementById("colAccent2").value
+      };
+    } else {
+      state.settings.customColors = null;
+    }
+    applyTheme();
+    applyCustomColors();
+    save();
+    document.getElementById("appearanceModal").classList.remove("open");
+    renderAll();
+  });
+
+  document.getElementById("menuGoHelp").addEventListener("click", ()=>{
+    document.getElementById("menuModal").classList.remove("open");
+    document.getElementById("helpModal").classList.add("open");
+  });
+  document.getElementById("btnCloseHelp").addEventListener("click", ()=>{
+    document.getElementById("helpModal").classList.remove("open");
+  });
+
+  function applyTheme(){
+    const t = state.settings.theme || "auto";
+    if(t==="auto"){ document.documentElement.removeAttribute("data-theme"); }
+    else{ document.documentElement.setAttribute("data-theme", t); }
+  }
+  applyTheme();
+
+  const CUSTOM_COLOR_KEYS = ["bg","card","text","accent","accent2"];
+  function applyCustomColors(){
+    const root = document.documentElement.style;
+    const c = state.settings.customColors;
+    CUSTOM_COLOR_KEYS.forEach(k=>{
+      if(c && c[k]) root.setProperty("--"+k, c[k]);
+      else root.removeProperty("--"+k);
+    });
+  }
+  applyCustomColors();
+  function currentColorValue(varName, fallback){
+    const v = getComputedStyle(document.documentElement).getPropertyValue(varName).trim();
+    return v || fallback;
+  }
+  function toHexColor(v){
+    // color inputs require a 6-digit hex; if the computed value isn't hex (rare), fall back.
+    if(/^#[0-9a-fA-F]{6}$/.test(v)) return v;
+    return "#000000";
+  }
+  function populateColorInputs(){
+    const c = state.settings.customColors;
+    document.getElementById("colBg").value = toHexColor(c && c.bg ? c.bg : currentColorValue("--bg","#f4f5f7"));
+    document.getElementById("colCard").value = toHexColor(c && c.card ? c.card : currentColorValue("--card","#ffffff"));
+    document.getElementById("colText").value = toHexColor(c && c.text ? c.text : currentColorValue("--text","#1a1d23"));
+    document.getElementById("colAccent").value = toHexColor(c && c.accent ? c.accent : currentColorValue("--accent","#2563eb"));
+    document.getElementById("colAccent2").value = toHexColor(c && c.accent2 ? c.accent2 : currentColorValue("--accent2","#39ff14"));
+    const toggle = document.getElementById("setCustomColorsToggle");
+    toggle.checked = !!c;
+    document.getElementById("customColorsPanel").style.display = c ? "block" : "none";
+  }
+  document.getElementById("setCustomColorsToggle").addEventListener("change", (e)=>{
+    document.getElementById("customColorsPanel").style.display = e.target.checked ? "block" : "none";
+    if(e.target.checked && !state.settings.customColors){
+      // seed inputs with current theme colors so the user starts from something sensible
+      document.getElementById("colBg").value = toHexColor(currentColorValue("--bg","#f4f5f7"));
+      document.getElementById("colCard").value = toHexColor(currentColorValue("--card","#ffffff"));
+      document.getElementById("colText").value = toHexColor(currentColorValue("--text","#1a1d23"));
+      document.getElementById("colAccent").value = toHexColor(currentColorValue("--accent","#2563eb"));
+      document.getElementById("colAccent2").value = toHexColor(currentColorValue("--accent2","#39ff14"));
+    }
+  });
+  document.getElementById("btnResetColors").addEventListener("click", ()=>{
+    state.settings.customColors = null;
+    applyCustomColors();
+    populateColorInputs();
+  });
+  document.getElementById("btnCloseSettings").addEventListener("click", ()=>{
+    state.settings.nom = document.getElementById("setNom").value || T().driverDefault;
+    state.settings.coefHoraire = parseFloat(document.getElementById("setCoefHoraire").value)||15.295;
+    state.settings.coefNuitee = parseFloat((document.getElementById("setCoefNuitee").value||"").replace(",","."))||15.295;
+    state.settings.pause1 = parseInt(document.getElementById("setPause1").value,10)||15;
+    state.settings.pause2 = parseInt(document.getElementById("setPause2").value,10)||45;
+    save();
+    document.getElementById("settingsModal").classList.remove("open");
+    renderAll();
+  });
+
+  // Échap ferme la fenêtre du jour
+  document.addEventListener("keydown", (e)=>{
+    if(e.key === "Escape" && openDate){ openDate = null; renderDays(); }
+  });
+
+  // Month nav
+  document.getElementById("prevMonth").addEventListener("click", ()=>{
+    current.setMonth(current.getMonth()-1);
+    openDate = null;
+    renderAll();
+  });
+  document.getElementById("nextMonth").addEventListener("click", ()=>{
+    current.setMonth(current.getMonth()+1);
+    openDate = null;
+    renderAll();
+  });
+
+  // Fiche de salaire binds (indemnités et ajustement manuel)
+  ["indemSejour","indemRepas","ajustManuel"].forEach(id=>{
+    document.getElementById(id).addEventListener("change", ()=>{
+      const key = monthKey(current);
+      const monthObj = ensureMonth(key);
+      monthObj.fiche.indemSejour = parseFloat(document.getElementById("indemSejour").value)||0;
+      monthObj.fiche.indemRepas = parseFloat(document.getElementById("indemRepas").value)||0;
+      monthObj.fiche.ajust = parseFloat(document.getElementById("ajustManuel").value)||0;
+      monthObj.fiche.indemSejour2 = Math.round(monthObj.fiche.ajust * (state.settings.coefNuitee||0) * 100)/100;
+      document.getElementById("indemSejour2").value = monthObj.fiche.indemSejour2;
+      save();
+      renderCompare();
+    });
+  });
+  document.getElementById("btnRecalc").addEventListener("click", renderCompare);
+
+  // History
+  document.getElementById("tabHistory").addEventListener("click", ()=>{
+    const list = document.getElementById("historyList");
+    const keys = Object.keys(state.months).sort().reverse();
+    if(keys.length===0){
+      list.innerHTML = '<p style="color:var(--muted); font-size:.85rem;">'+T().historyEmpty+'</p>';
+    } else {
+      list.innerHTML = keys.map(k=>{
+        const [y,m] = k.split("-");
+        return `<div class="day-card" style="padding:12px 14px; cursor:pointer;" data-key="${k}">
+          <b>${MOIS[parseInt(m,10)-1]} ${y}</b>
+        </div>`;
+      }).join("");
+      list.querySelectorAll("[data-key]").forEach(el=>{
+        el.addEventListener("click", ()=>{
+          const [y,m] = el.dataset.key.split("-");
+          current = new Date(parseInt(y,10), parseInt(m,10)-1, 1);
+          document.getElementById("historyModal").classList.remove("open");
+          openDate = null;
+          renderAll();
+        });
+      });
+    }
+    document.getElementById("historyModal").classList.add("open");
+  });
+  document.getElementById("btnCloseHistory").addEventListener("click", ()=>{
+    document.getElementById("historyModal").classList.remove("open");
+  });
+  document.getElementById("tabDays").addEventListener("click", ()=>{
+    window.scrollTo({top:0, behavior:"smooth"});
+  });
+
+  // Synchronisation Google Drive
+  const SYNC_FILENAME = "MesHeures_donnees.json";
+
+  // =====================================================================
+  //  GOOGLE DRIVE HORS DE CLAUDE (GitHub Pages ou tout autre hébergement)
+  //  Dans Claude : on passe par le connecteur Google Drive de Claude.
+  //  Ailleurs : on se connecte directement à Google Drive avec le compte
+  //  Google de l'utilisateur (fenêtre de connexion Google).
+  //  >>> Colle ici ton « ID client OAuth » Google (il n'est pas secret) :
+  const GOOGLE_CLIENT_ID = "";
+  // =====================================================================
+  const HAS_CLAUDE = !!(window.claude && typeof window.claude.use === "function");
+  const DRIVE_SCOPE = "https://www.googleapis.com/auth/drive.file";
+  let gisLoading = null, gToken = null, gTokenExp = 0, gTokenPromise = null;
+
+  function loadGis(){
+    if(window.google && google.accounts && google.accounts.oauth2) return Promise.resolve();
+    if(gisLoading) return gisLoading;
+    gisLoading = new Promise((resolve, reject)=>{
+      const sc = document.createElement("script");
+      sc.src = "https://accounts.google.com/gsi/client";
+      sc.async = true;
+      sc.onload = ()=>resolve();
+      sc.onerror = ()=>{ gisLoading = null; reject({code:"gis_load_failed"}); };
+      document.head.appendChild(sc);
+    });
+    return gisLoading;
+  }
+  if(!HAS_CLAUDE && GOOGLE_CLIENT_ID) loadGis().catch(()=>{});
+
+  // Demande (ou réutilise) l'autorisation Google Drive. À appeler dès le clic.
+  function getGoogleToken(forceNew){
+    if(!GOOGLE_CLIENT_ID) return Promise.reject({code:"drive_not_configured"});
+    if(!forceNew && gToken && Date.now() < gTokenExp - 60000) return Promise.resolve(gToken);
+    if(gTokenPromise) return gTokenPromise;
+    gTokenPromise = loadGis().then(()=> new Promise((resolve, reject)=>{
+      const client = google.accounts.oauth2.initTokenClient({
+        client_id: GOOGLE_CLIENT_ID,
+        scope: DRIVE_SCOPE,
+        callback: (resp)=>{
+          if(resp && resp.access_token){
+            gToken = resp.access_token;
+            gTokenExp = Date.now() + (Number(resp.expires_in)||3600)*1000;
+            resolve(gToken);
+          } else reject({code:"not_granted"});
+        },
+        error_callback: ()=>reject({code:"not_granted"})
+      });
+      client.requestAccessToken({prompt: gToken ? "" : "consent"});
+    })).finally(()=>{ gTokenPromise = null; });
+    return gTokenPromise;
+  }
+
+  async function gFetch(url, opts, retried){
+    const token = await getGoogleToken(false);
+    opts = opts || {};
+    opts.headers = Object.assign({}, opts.headers||{}, {Authorization: "Bearer "+token});
+    const res = await fetch(url, opts);
+    if(res.status === 401 && !retried){ gToken = null; return gFetch(url, opts, true); }
+    if(!res.ok) throw {code:"drive_http_"+res.status};
+    return res;
+  }
+  function b64Utf8(txt){ return btoa(unescape(encodeURIComponent(txt))); }
+  function multipartBody(meta, content, contentType){
+    const boundary = "mbsdc"+Math.random().toString(36).slice(2);
+    const body = "--"+boundary+"\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n"+JSON.stringify(meta)+
+      "\r\n--"+boundary+"\r\nContent-Type: "+contentType+"; charset=UTF-8\r\n\r\n"+content+"\r\n--"+boundary+"--";
+    return {body, type: "multipart/related; boundary="+boundary};
+  }
+  const DRIVE_API = "https://www.googleapis.com/drive/v3/files";
+  const DRIVE_UP = "https://www.googleapis.com/upload/drive/v3/files";
+
+  // Même interface que le connecteur de Claude : callTool("Google Drive", outil, arguments)
+  const directDrive = {
+    async callTool(server, tool, args){
+      args = args || {};
+      if(tool === "create_file"){
+        const toSheet = args.contentMimeType === "text/csv" && !args.disableConversionToGoogleType;
+        // Fichier de synchronisation : on met à jour le fichier existant au lieu d'en créer un nouveau
+        if(!toSheet){
+          const q = encodeURIComponent("name = '"+args.title.replace(/'/g,"\\'")+"' and trashed = false");
+          const found = await (await gFetch(DRIVE_API+"?q="+q+"&fields=files(id)&orderBy=modifiedTime desc")).json();
+          if(found.files && found.files.length){
+            const id = found.files[0].id;
+            await gFetch(DRIVE_UP+"/"+id+"?uploadType=media", {method:"PATCH", headers:{"Content-Type": args.contentMimeType||"application/json"}, body: args.textContent});
+            return {payload:{id, name: args.title}};
+          }
+        }
+        const meta = {name: args.title};
+        if(toSheet) meta.mimeType = "application/vnd.google-apps.spreadsheet";
+        const mp = multipartBody(meta, args.textContent||"", args.contentMimeType||"text/plain");
+        const res = await gFetch(DRIVE_UP+"?uploadType=multipart&fields=id,name,mimeType", {method:"POST", headers:{"Content-Type": mp.type}, body: mp.body});
+        return {payload: await res.json()};
+      }
+      if(tool === "search_files"){
+        const m = /contains\s+'([^']*)'/.exec(args.query||"");
+        const term = m ? m[1] : "";
+        const q = encodeURIComponent("name contains '"+term.replace(/'/g,"\\'")+"' and trashed = false");
+        const data = await (await gFetch(DRIVE_API+"?q="+q+"&orderBy=modifiedTime desc&pageSize="+(args.pageSize||10)+"&fields=files(id,name,mimeType,createdTime,modifiedTime)")).json();
+        // le plus récent = dernière modification
+        const files = (data.files||[]).map(f=>Object.assign({}, f, {createdTime: f.modifiedTime || f.createdTime}));
+        return {payload:{files}};
+      }
+      if(tool === "download_file_content"){
+        const txt = await (await gFetch(DRIVE_API+"/"+encodeURIComponent(args.fileId)+"?alt=media")).text();
+        return {payload:{content: b64Utf8(txt)}};
+      }
+      if(tool === "get_file_metadata"){
+        const data = await (await gFetch(DRIVE_API+"/"+encodeURIComponent(args.fileId)+"?fields=id,name,mimeType")).json();
+        return {payload: data};
+      }
+      throw {code:"unsupported_tool"};
+    }
+  };
+  // Téléchargement d'un fichier hors de Claude
+  const directDownloads = {
+    async save({filename, data}){
+      const url = URL.createObjectURL(data);
+      const a = document.createElement("a");
+      a.href = url; a.download = filename; a.style.display = "none";
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(()=>URL.revokeObjectURL(url), 15000);
+    }
+  };
+  async function getMcp(){
+    if(HAS_CLAUDE) return window.claude.use("mcp");
+    getGoogleToken(false).catch(()=>{}); // ouvre la connexion Google tout de suite (pendant le clic)
+    return directDrive;
+  }
+  async function getDownloads(){
+    if(HAS_CLAUDE) return window.claude.use("downloads");
+    return directDownloads;
+  }
+  const DRIVE_NOT_CONFIGURED = "⚙️ Google Drive n'est pas encore configuré pour cette version hébergée (ID client Google manquant).";
+
+  function syncStatusMsg(html){
+    document.getElementById("syncStatus").innerHTML = html;
+  }
+
+  document.getElementById("btnSync").addEventListener("click", ()=>{
+    syncStatusMsg("");
+    document.getElementById("syncModal").classList.add("open");
+  });
+  document.getElementById("btnCloseSync").addEventListener("click", ()=>{
+    document.getElementById("syncModal").classList.remove("open");
+  });
+
+  function syncErrorMsg(err){
+    const code = err && err.code;
+    const t = T();
+    if(code === "drive_not_configured") return DRIVE_NOT_CONFIGURED;
+    if(code === "gis_load_failed") return "⚠️ Impossible de joindre Google. Vérifie ta connexion Internet.";
+    if(code === "needs_reauth") return HAS_CLAUDE ? t.errReauth : "⚠️ Ta connexion Google a expiré : réessaie, une fenêtre Google va s'ouvrir.";
+    if(code === "server_not_connected") return t.errNotConnected;
+    if(code === "not_granted") return t.errNotGranted;
+    return t.errGeneric;
+  }
+
+  document.getElementById("btnSyncUp").addEventListener("click", async ()=>{
+    const t = T();
+    syncStatusMsg("<p>"+t.syncSending+"</p>");
+    try{
+      const mcp = await getMcp();
+      if(!mcp){ syncStatusMsg("<p>"+t.driveUnavailable+"</p>"); return; }
+      const dataStr = JSON.stringify(state, null, 2);
+      await mcp.callTool("Google Drive", "create_file", {
+        title: SYNC_FILENAME,
+        textContent: dataStr,
+        contentMimeType: "application/json",
+        disableConversionToGoogleType: true
+      });
+      syncStatusMsg("<p>"+t.syncSent+"</p>");
+    }catch(err){
+      console.error(err);
+      syncStatusMsg("<p>"+syncErrorMsg(err)+"</p>");
+    }
+  });
+
+  document.getElementById("btnSyncDown").addEventListener("click", async ()=>{
+    const t = T();
+    syncStatusMsg("<p>"+t.syncSearching+"</p>");
+    try{
+      const mcp = await getMcp();
+      if(!mcp){ syncStatusMsg("<p>"+t.driveUnavailable+"</p>"); return; }
+      const result = await mcp.callTool("Google Drive", "search_files", {
+        query: "title contains 'MesHeures_donnees'",
+        excludeContentSnippets: true,
+        pageSize: 10
+      });
+      const files = (result && result.payload && result.payload.files) || [];
+      files.sort((a,b)=> new Date(b.createdTime) - new Date(a.createdTime));
+      if(files.length===0){
+        syncStatusMsg("<p>"+t.syncNoData+"</p>");
+        return;
+      }
+      const f = files[0];
+      const dl = await mcp.callTool("Google Drive", "download_file_content", {fileId: f.id});
+      const b64 = dl && dl.payload && dl.payload.content;
+      if(!b64) throw new Error("no content");
+      const jsonStr = decodeURIComponent(escape(atob(b64)));
+      const imported = JSON.parse(jsonStr);
+      if(!imported || !imported.settings || !imported.months){
+        syncStatusMsg("<p>"+t.syncInvalidFile+"</p>");
+        return;
+      }
+      syncStatusMsg(
+        '<p>'+t.syncFoundConfirm+'</p>'+
+        '<button class="btn secondary" id="btnSyncDownConfirm" style="margin-top:6px;">'+t.syncConfirmYes+'</button>'+
+        '<button class="btn secondary" id="btnSyncDownCancel" style="margin-top:6px;">'+t.btnClose+'</button>'
+      );
+      document.getElementById("btnSyncDownConfirm").addEventListener("click", ()=>{
+        state = imported;
+        save();
+        renderAll();
+        syncStatusMsg("<p>"+t.syncRetrieved+"</p>");
+      });
+      document.getElementById("btnSyncDownCancel").addEventListener("click", ()=>{
+        syncStatusMsg("");
+      });
+    }catch(err){
+      console.error(err);
+      syncStatusMsg("<p>"+syncErrorMsg(err)+"</p>");
+    }
+  });
+
+  document.getElementById("btnExport").addEventListener("click", async ()=>{
+    const t = T();
+    if(!HAS_CLAUDE && GOOGLE_CLIENT_ID) getGoogleToken(false).catch(()=>{}); // connexion Google lancée pendant le clic
+    const statusEl0 = document.getElementById("exportStatus");
+    statusEl0.innerHTML = "<p>"+t.exportClicReceived+"</p>";
+    try{
+    const key = monthKey(current);
+    const monthObj = ensureMonth(key);
+    const n = daysInMonth(current);
+    const rows = [t.csvHeader];
+    let totals = {conduite:0, liaison:0, total:0, pause:0, pause2:0, reel:0, nuitees:0, conges:0};
+    for(let day=1; day<=n; day++){
+      const d = new Date(current.getFullYear(), current.getMonth(), day);
+      const dow = d.getDay();
+      const dateStr = d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(day).padStart(2,"0");
+      const entry = monthObj.days[dateStr] || {conge:false,conduite:"",total:"",pause1:0,pause2:0,nuitee:false,debut:"",fin:""};
+      const cMin = timeToMin(entry.conduite), tMin = timeToMin(entry.total);
+      const pMin = (parseInt(entry.pause1,10)||0)+(parseInt(entry.pause2,10)||0);
+      const liaison = Math.max(0, tMin-cMin);
+      const net = Math.max(0, tMin-pMin);
+      if(!entry.conge){
+        totals.conduite+=cMin; totals.total+=tMin; totals.liaison+=liaison; totals.pause+=pMin;
+        totals.pause2 += (parseInt(entry.pause2,10)||0);
+        totals.reel += (parseInt(entry.pause1,10)||0);
+        if(entry.nuitee) totals.nuitees+=1;
+        if(entry.conge) totals.conges+=1;
+      } else {
+        totals.conges+=1;
+      }
+      rows.push([
+        JOURS[d.getDay()], dateStr,
+        entry.debut||"", entry.fin||"",
+        minToTime(cMin), minToTime(liaison),
+        entry.nuitee?t.csvOui:"",
+        entry.conge?t.csvOui:"",
+        entry.pause1, entry.pause2,
+        minToTime(tMin)
+      ]);
+    }
+    rows.push([]);
+    rows.push([t.csvTotaux,"","","", minToTime(totals.conduite), minToTime(totals.liaison), totals.nuitees+" "+t.csvNuitees, totals.conges+" "+t.csvConges, minToTime(totals.reel), minToTime(totals.pause2), minToTime(totals.total)]);
+    rows.push([t.csvTotalP45,"","","","","","","","","", minToTime(Math.max(0,totals.total-totals.pause2))]);
+    rows.push([t.csvTotalReel,"","","","","","","","","", minToTime(Math.max(0,totals.total-totals.reel))]);
+    rows.push([]);
+    const coef = state.settings.coefHoraire||1;
+    const indemHeures = ((parseFloat(monthObj.fiche.indemSejour)||0)+(parseFloat(monthObj.fiche.indemRepas)||0)+(parseFloat(monthObj.fiche.indemSejour2)||0))/coef;
+    const ficheMin = timeToMin(monthObj.fiche.heures) + indemHeures*60;
+    const netCalc = Math.max(0,totals.total-totals.reel);
+    rows.push([t.csvCompareTitle]);
+    rows.push([t.csvHeuresFiche, monthObj.fiche.heures||"00:00"]);
+    rows.push([t.csvIndemSejour, monthObj.fiche.indemSejour||0]);
+    rows.push([t.csvIndemRepas, monthObj.fiche.indemRepas||0]);
+    rows.push([t.csvIndemNuit, monthObj.fiche.indemSejour2||0]);
+    rows.push([t.csvCoefHoraire, coef]);
+    rows.push([t.csvAjustManuel, monthObj.fiche.ajust||0]);
+    rows.push([t.csvFicheConverties, minToTime(ficheMin)]);
+    rows.push([t.csvHeuresCalc, minToTime(netCalc)]);
+    rows.push([t.csvDifference, minToTime(ficheMin-netCalc)]);
+
+    function csvEscape(v){
+      const s = (v===undefined||v===null) ? "" : String(v);
+      if(/[",\n;]/.test(s)) return '"'+s.replace(/"/g,'""')+'"';
+      return s;
+    }
+    const csvText = rows.map(r => r.map(csvEscape).join(",")).join("\r\n");
+
+    const filename = "Heures_"+MOIS[current.getMonth()]+"_"+current.getFullYear()+".csv";
+    const statusEl = document.getElementById("exportStatus");
+    statusEl.innerHTML = "<p>"+t.exportGenerating+"</p>";
+    const blob = new Blob(["\uFEFF"+csvText], {type:"text/csv;charset=utf-8"});
+    try{
+      const downloads = await getDownloads();
+      if(downloads){
+        try{
+          await downloads.save({filename, data: blob});
+          statusEl.innerHTML = "<p style=\"text-align:center;\">"+t.exportDownloaded+"</p>";
+        }catch(err){
+          console.error("download error", err);
+          statusEl.innerHTML = "<p>"+t.exportDownloadFailed+"</p>";
+        }
+      } else {
+        statusEl.innerHTML = "<p>"+t.exportDownloadUnavailable+"</p>";
+      }
+    }catch(e){
+      console.error(e);
+      statusEl.innerHTML = "<p>"+t.exportDownloadUnavailable+"</p>";
+    }
+
+    // Envoi sur Google Drive : converti automatiquement en Google Sheet
+    const localMsg = statusEl.innerHTML;
+    try{
+      const mcp = await getMcp();
+      if(mcp){
+        statusEl.innerHTML = localMsg + "<p style=\"text-align:center;\">"+t.exportSendingDrive+"</p>";
+        const sheetTitle = "Heures_"+MOIS[current.getMonth()]+"_"+current.getFullYear();
+        const result = await mcp.callTool("Google Drive", "create_file", {
+          title: sheetTitle,
+          textContent: csvText,
+          contentMimeType: "text/csv"
+        });
+        const file = result && result.payload;
+        const fileId = file && file.id;
+        // On construit directement le lien Google Sheets standard (docs.google.com/spreadsheets/d/ID/edit),
+        // plus fiable que le "viewUrl" générique renvoyé par l'API, qui a causé l'erreur
+        // "impossible d'ouvrir le fichier" une fois collé dans le navigateur.
+        let viewUrl = fileId ? ("https://docs.google.com/spreadsheets/d/"+fileId+"/edit") : (file && file.viewUrl);
+
+        // On vérifie que le fichier est bien converti en Google Sheet avant d'afficher le lien.
+        if(fileId){
+          for(let i=0; i<4; i++){
+            await new Promise(r => setTimeout(r, 1200));
+            try{
+              const meta = await mcp.callTool("Google Drive", "get_file_metadata", {fileId});
+              const mfile = meta && meta.payload;
+              if(mfile && mfile.mimeType === "application/vnd.google-apps.spreadsheet"){
+                break;
+              }
+            }catch(metaErr){
+              console.error("metadata check error", metaErr);
+            }
+          }
+        }
+
+        if(viewUrl){
+          statusEl.innerHTML = localMsg + '<a href="'+viewUrl+'" rel="noopener" class="btn secondary" style="display:block;text-align:center;text-decoration:none;margin-top:6px;background:var(--accent2);color:var(--accent2-text);border-color:var(--accent2);">'+t.exportOpenSheets+'</a><button type="button" id="btnCopyLink" class="btn" style="margin-top:6px;background:var(--accent2);color:var(--accent2-text);border-color:var(--accent2);">'+t.exportCopyLink+'</button><p id="copyLinkMsg" style="text-align:center;font-size:12px;color:#888;margin-top:4px;">'+t.exportCopyHint+'</p>';
+          document.getElementById("btnCopyLink").addEventListener("click", async ()=>{
+            const msgEl = document.getElementById("copyLinkMsg");
+            try{
+              await navigator.clipboard.writeText(viewUrl);
+              msgEl.textContent = t.exportCopySuccess;
+            }catch(e){
+              try{
+                const ta = document.createElement("textarea");
+                ta.value = viewUrl;
+                ta.style.position = "fixed";
+                ta.style.left = "-9999px";
+                document.body.appendChild(ta);
+                ta.focus(); ta.select();
+                document.execCommand("copy");
+                document.body.removeChild(ta);
+                msgEl.textContent = t.exportCopySuccess;
+              }catch(e2){
+                msgEl.textContent = t.exportCopyFail+" "+viewUrl;
+              }
+            }
+          });
+        } else {
+          statusEl.innerHTML = localMsg + "<p>"+t.exportSentDrive+"</p>";
+        }
+      }
+    }catch(err){
+      console.error(err);
+      const code = err && err.code;
+      if(code === "drive_not_configured"){
+        statusEl.innerHTML = localMsg + "<p>"+DRIVE_NOT_CONFIGURED+"</p>";
+      } else if(code === "not_granted"){
+        statusEl.innerHTML = localMsg + "<p>"+t.errNotGranted+"</p>";
+      } else if(code === "needs_reauth"){
+        statusEl.innerHTML = localMsg + "<p>"+t.errReauth+"</p>";
+      } else if(code === "server_not_connected"){
+        statusEl.innerHTML = localMsg;
+      } else {
+        statusEl.innerHTML = localMsg + "<p>"+t.errDriveFailed+"</p>";
+      }
+    }
+    }catch(fatalErr){
+      console.error("Export fatal error:", fatalErr);
+      statusEl0.innerHTML = "<p>"+t.fatalError+" "+(fatalErr && fatalErr.message ? fatalErr.message : String(fatalErr))+"</p>";
+    }
+  });
+
+  renderAll();
+  syncNetTime();
+})();
+</script>
+<script>
+  // Mode hors ligne + installation comme une appli (uniquement sur un vrai site, ex. GitHub Pages)
+  if("serviceWorker" in navigator && location.protocol === "https:" && !(window.claude && window.claude.use)){
+    window.addEventListener("load", ()=>{ navigator.serviceWorker.register("sw.js").catch(()=>{}); });
+  }
+</script>
+</body>
+</html>
