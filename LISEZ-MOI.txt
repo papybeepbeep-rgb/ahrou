@@ -18,7 +18,7 @@ METTRE EN LIGNE (une seule fois)
      (pas le dossier lui-même), puis « Commit changes ».
      Astuce : si le fichier .nojekyll n'apparaît pas (fichier caché), ce n'est pas grave.
   3. « Settings » → « Pages » → Source : « Deploy from a branch », Branch : « main », dossier « / (root) » → « Save ».
-  4. Après 1 à 2 minutes, l'adresse s'affiche, par ex. : https://tonnom.github.io/ahrou/
+  4. Après 1 à 2 minutes, l'adresse s'affiche, par ex. : https://papybeepbeep-rgb.github.io/ahrou/
 
 INSTALLER SUR LE TÉLÉPHONE
   iPhone  : ouvrir l'adresse dans Safari → bouton Partager → « Sur l'écran d'accueil ».
@@ -26,18 +26,13 @@ INSTALLER SUR LE TÉLÉPHONE
 
 METTRE À JOUR PLUS TARD
   Remplace index.html (« Add file » → « Upload files »), puis dans sw.js change
-  "ahrou-v1" en "ahrou-v2" (puis v3, v4…) pour que les téléphones prennent la nouvelle version.
+  "ahrou-v3" en "ahrou-v4" (puis v5, v6…) pour que les téléphones prennent la nouvelle version.
 
 À COMPLÉTER AVANT DE DIFFUSER
-  • Google Drive (Synchronisation + Visualisation) : dans index.html, cherche
-      const GOOGLE_CLIENT_ID = "";
-    et colle ton ID client Google entre les guillemets (voir les étapes Google données par Claude).
-    Dans la console Google, l'origine autorisée est l'adresse SANS le nom du dépôt,
-    par ex. https://tonnom.github.io
-    Tant que ce n'est pas fait, ces deux boutons affichent « Google Drive n'est pas encore configuré ».
-  • PayPal : dans index.html, cherche
-      const PAYPAL_ME = "TonNomPaypal";
-    et remplace TonNomPaypal par ton identifiant PayPal.me.
+  • Google Drive : l'ID client Google est déjà en place dans index.html.
+    Dans la console Google (Clients → ton client Web → Origines JavaScript autorisées),
+    il faut avoir exactement : https://papybeepbeep-rgb.github.io   (sans /ahrou/ et sans / final)
+  • PayPal : déjà en place (paypal.me/Ahrou1613/0.99EUR et paypal.me/Ahrou1613/10EUR).
 
 IMPORTANT
   • Le Générateur de codes NE doit PAS être mis sur GitHub : il est réservé à toi.
