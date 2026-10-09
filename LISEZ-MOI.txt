@@ -3,6 +3,7 @@ AHROU – Dossier à déposer sur GitHub Pages
 
 CONTENU DU DOSSIER
   index.html              L'application Ahrou (page principale)
+  confidentialite.html    Règles de confidentialité (demandées par Google)
   manifest.webmanifest    Fiche d'installation (nom « Ahrou », icône, plein écran)
   sw.js                   Fonctionnement hors connexion
   ahrou-icon.svg          Icône (version vectorielle)
@@ -26,7 +27,7 @@ INSTALLER SUR LE TÉLÉPHONE
 
 METTRE À JOUR PLUS TARD
   Remplace index.html (« Add file » → « Upload files »), puis dans sw.js change
-  "ahrou-v5" en "ahrou-v6" (puis v7, v8…) pour que les téléphones prennent la nouvelle version.
+  "ahrou-v6" en "ahrou-v7" (puis v8, v9…) pour que les téléphones prennent la nouvelle version.
 
 À COMPLÉTER AVANT DE DIFFUSER
   • Google Drive : l'ID client Google est déjà en place dans index.html.

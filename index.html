@@ -178,6 +178,15 @@
   .day-card.day-locked{filter:blur(4px); pointer-events:none; user-select:none; opacity:.75;}
   .wrap.readonly #daysList input, .wrap.readonly .section input{opacity:.7;}
   .wrap.readonly .slider{cursor:not-allowed;}
+  .contact-head{display:flex; align-items:center; gap:14px; padding:6px 0 14px; border-bottom:1px solid var(--border);}
+  .contact-logo{width:64px; height:64px; border-radius:16px; box-shadow:var(--shadow); flex:none;}
+  .contact-name{font-size:1.3rem; font-weight:800;}
+  .contact-ver{font-size:.95rem; font-weight:700; color:#D62828; margin-top:2px;}
+  .contact-date{font-size:.8rem; color:var(--muted); margin-top:1px;}
+  .contact-txt{font-size:.9rem; line-height:1.45; margin:14px 0 4px;}
+  .contact-mail{display:block; text-align:center; text-decoration:none; background:#D62828 !important; color:#fff !important;}
+  .contact-addr{text-align:center; font-weight:700; margin-top:8px; user-select:all; word-break:break-all;}
+  .contact-privacy{display:block; text-align:center; font-size:.8rem; margin-top:10px; color:var(--muted);}
   #subMsg{font-size:.85rem; min-height:1.2em; margin-top:8px; text-align:center;}
 </style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -300,6 +309,25 @@
   </div>
 </div>
 
+<div class="modal-bg" id="contactModal">
+  <div class="modal contact-modal">
+    <div class="contact-head">
+      <img src="apple-touch-icon.png" alt="" class="contact-logo" onerror="this.style.display='none'">
+      <div>
+        <div class="contact-name">Ahrou</div>
+        <div class="contact-ver" id="contactVersion"></div>
+        <div class="contact-date" id="contactDate"></div>
+      </div>
+    </div>
+    <p class="contact-txt">Une question, un souci, une idée d'amélioration ? Écris-nous, nous te répondrons dès que possible.</p>
+    <a class="btn contact-mail" id="contactMailBtn" href="mailto:ahrou1613@gmail.com">✉️ Envoyer un e-mail</a>
+    <div class="contact-addr">ahrou1613@gmail.com</div>
+    <small class="hint" style="text-align:center;">Ton numéro client et la version de l'appli sont ajoutés automatiquement au message, pour qu'on puisse t'aider plus vite.</small>
+    <a class="contact-privacy" href="confidentialite.html" target="_blank" rel="noopener">Règles de confidentialité</a>
+    <button class="btn secondary" id="btnCloseContact" style="margin-top:12px;">Fermer</button>
+  </div>
+</div>
+
 <div class="modal-bg" id="menuModal">
   <div class="modal">
     <h2>⚙️ Menu</h2>
@@ -307,6 +335,7 @@
     <button class="btn secondary" id="menuGoAppearance" style="display:block;width:100%;margin-top:10px;text-align:start;">🎨 Apparence</button>
     <button class="btn secondary" id="menuGoHelp" style="display:block;width:100%;margin-top:10px;text-align:start;">❓ Aide</button>
     <button class="btn secondary" id="menuGoSub" style="display:block;width:100%;margin-top:10px;text-align:start;">💳 Abonnement</button>
+    <button class="btn secondary" id="menuGoContact" style="display:block;width:100%;margin-top:10px;text-align:start;">✉️ Contact</button>
     <button class="btn" id="btnCloseMenu" style="margin-top:14px;">Fermer</button>
   </div>
 </div>
@@ -1703,6 +1732,27 @@
     current = nowDate(); current.setDate(1);
     openDate = null;
     renderAll();
+  });
+
+  // ===== Contact / version =====
+  const APP_VERSION = "1.3";
+  const APP_UPDATED = "09/10/2026";
+  const CONTACT_EMAIL = "ahrou1613@gmail.com";
+  function openContact(){
+    ensureSub();
+    document.getElementById("contactVersion").textContent = "Version " + APP_VERSION;
+    document.getElementById("contactDate").textContent = "Mise à jour du " + APP_UPDATED;
+    const subject = "Ahrou " + APP_VERSION + " – Contact";
+    const body = "Bonjour,\n\n\n\n---\nVersion : " + APP_VERSION + " (" + APP_UPDATED + ")\nNuméro client : " + (state.settings.clientId||"") + "\nAppareil : " + navigator.userAgent;
+    document.getElementById("contactMailBtn").href = "mailto:" + CONTACT_EMAIL + "?subject=" + encodeURIComponent(subject) + "&body=" + encodeURIComponent(body);
+    document.getElementById("contactModal").classList.add("open");
+  }
+  document.getElementById("menuGoContact").addEventListener("click", ()=>{
+    document.getElementById("menuModal").classList.remove("open");
+    openContact();
+  });
+  document.getElementById("btnCloseContact").addEventListener("click", ()=>{
+    document.getElementById("contactModal").classList.remove("open");
   });
 
   function renderAll(){
