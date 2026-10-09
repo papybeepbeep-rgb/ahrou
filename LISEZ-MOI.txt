@@ -27,7 +27,7 @@ INSTALLER SUR LE TÉLÉPHONE
 
 METTRE À JOUR PLUS TARD
   Remplace index.html (« Add file » → « Upload files »), puis dans sw.js change
-  "ahrou-v6" en "ahrou-v7" (puis v8, v9…) pour que les téléphones prennent la nouvelle version.
+  "ahrou-v9" en "ahrou-v10" (puis v11, v12…) pour que les téléphones prennent la nouvelle version.
 
 À COMPLÉTER AVANT DE DIFFUSER
   • Google Drive : l'ID client Google est déjà en place dans index.html.
