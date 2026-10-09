@@ -153,7 +153,7 @@
   .day-card.popup .day-body{padding:4px 16px 18px;}
   .day-placeholder{height:46px; margin-bottom:10px; border:1px dashed var(--border); border-radius:14px; opacity:.5;}
   /* ===== Abonnement ===== */
-  .wrap.locked > :not(header):not(#paywall):not(#trialBanner){filter:blur(7px); pointer-events:none; user-select:none;}
+  .wrap.locked > :not(header):not(#paywall):not(#trialBanner):not(#backupBanner){filter:blur(7px); pointer-events:none; user-select:none;}
   .paywall{background:var(--card); border:2px solid #EBBD1F; border-radius:14px; padding:14px; margin-top:12px; box-shadow:var(--shadow); text-align:center;}
   .paywall h3{margin:0 0 6px; font-size:1rem;}
   .paywall p{margin:0 0 10px; font-size:.85rem; color:var(--muted); line-height:1.4;}
@@ -173,6 +173,7 @@
   .weekend-row .day-card:not(.popup) .day-head{justify-content:center; text-align:center;}
   .weekend-row .day-head .chips{display:none;}
   .day-card.we-worked .dname, .day-card.we-worked .ddate{color:#14532d;}
+  .day-card.we-worked.repos-ok .dname, .day-card.we-worked.repos-ok .ddate{color:#39ff14; font-weight:700; text-shadow:0 0 1px #000, 0 0 2px #14532d, 0 0 3px #14532d;}
   .day-card.over10 .dname, .day-card.over10 .ddate{color:#fff !important; font-weight:700;}
   .day-card.day-locked{filter:blur(4px); pointer-events:none; user-select:none; opacity:.75;}
   .wrap.readonly #daysList input, .wrap.readonly .section input{opacity:.7;}
@@ -203,6 +204,7 @@
   </header>
 
   <div class="trial-banner" id="trialBanner" style="display:none;"></div>
+  <div class="trial-banner" id="backupBanner" style="display:none;background:#2563eb;color:#fff;"></div>
 
   <div class="paywall" id="paywall" style="display:none;">
     <h3 id="paywallTitle">🔒 Abonnement requis</h3>
@@ -944,9 +946,14 @@
   function save(){
     try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
     catch(e){ console.error("save error", e); }
+    try{ scheduleAutoBackup(); renderBackupBanner(); }catch(e){}
   }
 
+  // L'appareil avait-il déjà des données au démarrage ? (sinon : nouvel appareil ou données effacées)
+  const HAD_LOCAL_DATA = (()=>{ try{ return !!localStorage.getItem(STORAGE_KEY); }catch(e){ return false; } })();
   let state = load();
+  // Demande au navigateur de ne pas effacer les données de l'appli de lui-même (manque de place, etc.)
+  try{ if(navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(()=>{}); }catch(e){}
   let current = new Date();
   current.setDate(1);
 
@@ -1075,7 +1082,6 @@
 
   // Coupure de 11 h : repos entre la fin de ce jour et le début du jour suivant
   function coupure11hOK(d, entry){
-    if(d.getDay()===5) return false; // le vendredi reste toujours blanc
     if(!entry || entry.conge || !entry.debut || !entry.fin) return false;
     const next = new Date(d.getFullYear(), d.getMonth(), d.getDate()+1);
     const nKey = monthKey(next);
@@ -1142,8 +1148,9 @@
       const workedWE = isWeekend && !!(entry && !entry.conge && (entry.conduite || entry.total || entry.debut || entry.fin));
       if(workedWE && !isOver){
         card.style.background = "#bbf7d0";
-        card.classList.remove("repos-ok");
         card.classList.add("we-worked");
+        // coupure de 11 h respectée aussi le week-end
+        if(coupure11hOK(d, entry)) card.classList.add("repos-ok"); else card.classList.remove("repos-ok");
       }
 
       const chips = [];
@@ -2050,25 +2057,98 @@
     return t.errGeneric;
   }
 
+  // ===== Sauvegarde Google Drive (manuelle, automatique et rappels) =====
+  function backupKey(){
+    const copy = JSON.parse(JSON.stringify(state));
+    if(copy.settings){ delete copy.settings.lastSeen; delete copy.settings.lastBackup; }
+    return JSON.stringify(copy);
+  }
+  let lastBackedKey = null;
+  async function uploadToDrive(){
+    const mcp = await getMcp();
+    if(!mcp) throw {code:"drive_unavailable"};
+    state.settings.lastBackup = Date.now();
+    save();
+    await mcp.callTool("Google Drive", "create_file", {
+      title: SYNC_FILENAME,
+      textContent: JSON.stringify(state, null, 2),
+      contentMimeType: "application/json",
+      disableConversionToGoogleType: true
+    });
+    lastBackedKey = backupKey();
+    renderBackupBanner();
+  }
+  function hasUserData(){
+    return Object.values(state.months||{}).some(m => Object.values(m.days||{}).some(e => e && (e.debut||e.fin||e.conduite||e.total)));
+  }
+  // Sauvegarde automatique (version hébergée) : quelques secondes après une modification,
+  // si l'utilisateur est déjà connecté à Google. Aucune fenêtre ne s'ouvre toute seule.
+  let autoTimer = null;
+  function scheduleAutoBackup(){
+    if(HAS_CLAUDE || !GOOGLE_CLIENT_ID) return;
+    clearTimeout(autoTimer);
+    autoTimer = setTimeout(async ()=>{
+      if(!(gToken && Date.now() < gTokenExp - 60000)) return; // pas connecté : le rappel s'en charge
+      if(!hasUserData() || backupKey() === lastBackedKey) return;
+      try{ await uploadToDrive(); }catch(e){ console.error("auto-backup", e); }
+    }, 15000);
+  }
+  let restoreDismissed = false;
+  function renderBackupBanner(){
+    const bb = document.getElementById("backupBanner");
+    if(!bb) return;
+    if(!HAD_LOCAL_DATA && !hasUserData() && !restoreDismissed){
+      bb.innerHTML = "📥 Rien d'enregistré sur cet appareil. Tu avais déjà utilisé l'appli ? <u>Appuie ici pour récupérer ta sauvegarde Google Drive</u>.";
+      bb.dataset.action = "restore";
+      bb.style.display = "block";
+      return;
+    }
+    const last = Number(state.settings.lastBackup)||0;
+    const days = last ? Math.floor((Date.now()-last)/86400000) : -1;
+    if(hasUserData() && (days < 0 || days >= 3)){
+      bb.innerHTML = "💾 " + (days < 0 ? "Tes heures ne sont pas encore sauvegardées." : "Dernière sauvegarde il y a "+days+" jours.") +
+        " Si le téléphone est nettoyé, elles seraient perdues. <u>Appuie ici pour sauvegarder sur Google Drive</u>.";
+      bb.dataset.action = "backup";
+      bb.style.display = "block";
+    } else {
+      bb.style.display = "none";
+    }
+  }
+  document.getElementById("backupBanner").addEventListener("click", async ()=>{
+    const bb = document.getElementById("backupBanner");
+    if(bb.dataset.action === "restore"){
+      restoreDismissed = true;
+      bb.style.display = "none";
+      syncStatusMsg("");
+      document.getElementById("syncModal").classList.add("open");
+      document.getElementById("btnSyncDown").click();
+      return;
+    }
+    bb.innerHTML = "⏳ Sauvegarde en cours…";
+    try{
+      await uploadToDrive();
+      bb.style.display = "block";
+      bb.innerHTML = "✅ Sauvegardé sur Google Drive.";
+      setTimeout(renderBackupBanner, 4000);
+    }catch(err){
+      console.error(err);
+      bb.innerHTML = "⚠️ " + syncErrorMsg(err) + " <u>Réessayer</u>";
+    }
+  });
+
   document.getElementById("btnSyncUp").addEventListener("click", async ()=>{
     const t = T();
     syncStatusMsg("<p>"+t.syncSending+"</p>");
     try{
-      const mcp = await getMcp();
-      if(!mcp){ syncStatusMsg("<p>"+t.driveUnavailable+"</p>"); return; }
-      const dataStr = JSON.stringify(state, null, 2);
-      await mcp.callTool("Google Drive", "create_file", {
-        title: SYNC_FILENAME,
-        textContent: dataStr,
-        contentMimeType: "application/json",
-        disableConversionToGoogleType: true
-      });
+      await uploadToDrive();
       syncStatusMsg("<p>"+t.syncSent+"</p>");
     }catch(err){
       console.error(err);
+      if(err && err.code === "drive_unavailable"){ syncStatusMsg("<p>"+t.driveUnavailable+"</p>"); return; }
       syncStatusMsg("<p>"+syncErrorMsg(err)+"</p>");
     }
   });
+
 
   document.getElementById("btnSyncDown").addEventListener("click", async ()=>{
     const t = T();
@@ -2105,7 +2185,9 @@
       document.getElementById("btnSyncDownConfirm").addEventListener("click", ()=>{
         state = imported;
         save();
+        lastBackedKey = backupKey();
         renderAll();
+        renderBackupBanner();
         syncStatusMsg("<p>"+t.syncRetrieved+"</p>");
       });
       document.getElementById("btnSyncDownCancel").addEventListener("click", ()=>{
@@ -2289,6 +2371,8 @@
   });
 
   renderAll();
+  renderBackupBanner();
+  setInterval(renderBackupBanner, 60000);
   syncNetTime();
 })();
 </script>
