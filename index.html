@@ -3006,7 +3006,19 @@
   renderBackupBanner();
   setInterval(renderBackupBanner, 60000);
   syncNetTime();
-  refreshVerified().then(handleActivationLink);
+  // À l'ouverture : la carte du jour se place juste sous le mois (fermée)
+  function scrollToToday(smooth){
+    const t = nowDate();
+    if(current.getFullYear() !== t.getFullYear() || current.getMonth() !== t.getMonth()) return;
+    const head = document.querySelector('#daysList .day-head[data-date="'+dStr(t)+'"]');
+    const card = head && head.closest(".day-card");
+    if(!card) return;
+    const hdr = document.querySelector("header");
+    const offset = (hdr ? hdr.getBoundingClientRect().height : 0) + 8;
+    const y = card.getBoundingClientRect().top + window.scrollY - offset;
+    window.scrollTo({top: Math.max(0, y), behavior: smooth ? "smooth" : "auto"});
+  }
+  refreshVerified().then(()=>{ requestAnimationFrame(()=>scrollToToday(false)); return handleActivationLink(); });
 })();
 </script>
 <script>
