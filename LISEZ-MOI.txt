@@ -54,3 +54,5 @@ Nouvelle icône : la roue-horloge (16 h 13) posée sur la route.
 
 VERSION 2.11 (002) – 11/11/2026 (cache sw.js : ahrou-v34)
 Fiche du jour plein écran, pastilles simplifiées, nouvelle icône, Fiche de paie ouverte en haut.
+
+VERSION 2.11 (003) – cache ahrou-v35 : fond de l icône = gris de l appli (#4F5358).
