@@ -56,3 +56,5 @@ VERSION 2.11 (002) – 11/11/2026 (cache sw.js : ahrou-v34)
 Fiche du jour plein écran, pastilles simplifiées, nouvelle icône, Fiche de paie ouverte en haut.
 
 VERSION 2.11 (003) – cache ahrou-v35 : fond de l icône = gris de l appli (#4F5358).
+
+VERSION 2.11 (004) – cache ahrou-v36 : bouton retour du téléphone, aide mise à jour, heures au format 8:45 dans Totaux, message abonnement sur « Ma journée », flèches veille/lendemain dans la fiche du jour.
